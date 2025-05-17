@@ -268,6 +268,16 @@ def parse_args():
     args = parser.parse_args()
     return args
 
+def get_label_for_track(self, track_id):
+    """
+    Get the detection label for a track
+    """
+    if track_id in self.track_to_detection_matches:
+        det_idx = self.track_to_detection_matches[track_id]
+        if det_idx in self.detection_labels:
+            return self.detection_labels[det_idx]
+    return 0  # Default to background class
+
 if __name__ == '__main__':
   # all train
   args = parse_args()
