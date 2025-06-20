@@ -5,7 +5,7 @@ import os
 from torchvision import transforms as T
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torchvision.models.detection as detection
-from sort.sort import Sort  # Import SORT tracker
+from sort.class_aware_sort import ClassAwareSort  # Import SORT tracker
 from roadWidth import get_max_road_width_y
 import datetime
 import torch.nn as nn
@@ -49,7 +49,7 @@ def compute_iou(boxA, boxB):
 
 # --------------------------
 # Modified: Convert Faster R-CNN output to SORT format (with class labels)
-def convert_to_sort_format(predictions, conf_threshold=0.85):
+def convert_to_sort_format(predictions, conf_threshold=0.6):
     detections = []
     detection_labels = []
 
@@ -160,7 +160,7 @@ def track(video_path, model_path=None, binary_classification=True):
     model = load_model(model_path, num_classes, binary_classification)
     
     # Use standard SORT tracker - now supports class labels
-    tracker = Sort(max_age=30, min_hits=3, iou_threshold=0.2)
+    tracker = ClassAwareSort()
 
     # Dictionary to store tracking history (for drawing lines)
     track_history = {}
