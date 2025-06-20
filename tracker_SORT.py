@@ -1,3 +1,7 @@
+import matplotlib
+matplotlib.use('Agg')  # IMPORTANT: pune asta înaintea import pyplot
+import matplotlib.pyplot as plt
+
 import torch
 import cv2
 import numpy as np
@@ -49,7 +53,7 @@ def compute_iou(boxA, boxB):
 
 # --------------------------
 # Modified: Convert Faster R-CNN output to SORT format (with class labels)
-def convert_to_sort_format(predictions, conf_threshold=0.6):
+def convert_to_sort_format(predictions, conf_threshold=0.85):
     detections = []
     detection_labels = []
 
@@ -228,7 +232,7 @@ def track(video_path, model_path=None, binary_classification=True):
     video_start_time = datetime.datetime.now()
     current_hour_timestamp = video_start_time.replace(minute=0, second=0, microsecond=0)
     next_hour_timestamp = get_next_hour_timestamp(current_hour_timestamp)
-    
+    nrOfDetectedVehicles = []
     # --------------------------
     # Process video
     while cap.isOpened():
@@ -252,7 +256,8 @@ def track(video_path, model_path=None, binary_classification=True):
                 next_hour_timestamp = get_next_hour_timestamp(next_hour_timestamp)
             
             if nrOfFrames == 1:
-                yline = get_max_road_width_y(frame)
+                yline = int(0.45 * height)
+                # yline = get_max_road_width_y(frame)
                 
             frame = cv2.resize(frame, (width, height), interpolation=cv2.INTER_AREA)
 
@@ -267,6 +272,9 @@ def track(video_path, model_path=None, binary_classification=True):
             
             # Update tracker with current detections and their labels
             tracked_objects = tracker.update(detections, detection_labels)
+            if(nrOfFrames % 10 == 0):
+                max_id = max([int(track[4]) for track in tracked_objects], default=0)
+                nrOfDetectedVehicles.append(max_id)
             
             # Process tracked objects
             active_track_ids = set()
@@ -378,15 +386,8 @@ def track(video_path, model_path=None, binary_classification=True):
 
     # Save final data at video end
     final_timestamp = video_start_time + datetime.timedelta(seconds=video_elapsed_seconds)
-    save_data_and_reset_counters(db, final_timestamp, binary_classification,
-                              large_vehicles_set, small_vehicles_set,
-                              cars_set, vans_set, trucks_set, busses_set)
 
-    # --------------------------
-    # Cleanup
-    cap.release()
-    out.release()
-    db.close()
+    
 
     if nrOfFrames > 0:
         print(f"Mean Detection time: {total_time / nrOfOutFrames}")
@@ -398,6 +399,9 @@ def track(video_path, model_path=None, binary_classification=True):
         print(f"Red factor: {reducing_factor}")
         print(f"FPS: {fps}")
         print(f"Duration: {duration}")
+        
+        print("plotting...")
+        plot_vehicles(nrOfDetectedVehicles)
 
         # Print vehicle counts based on classification mode
         if binary_classification:
@@ -408,6 +412,45 @@ def track(video_path, model_path=None, binary_classification=True):
                 f"Vehicle counts: Cars: {len(cars_set)}, Vans: {len(vans_set)}, Trucks: {len(trucks_set)}, Busses: {len(busses_set)}")
     else:
         print("No frames were processed. Check your video file or path.")
+
+
+    # ------------Cleanup--------------     
+    save_data_and_reset_counters(db, final_timestamp, binary_classification,
+                              large_vehicles_set, small_vehicles_set,
+                              cars_set, vans_set, trucks_set, busses_set)
+    cap.release()
+    out.release()
+    db.close()
+
+
+def plot_vehicles(vehicle_counts, output_path="vehicle_chart.png"):
+    """
+    Creează un grafic simplu cu numărul de vehicule detectate
+    """
+       
+    if not vehicle_counts:
+        print("Nu există date pentru grafic")
+        return
+    
+    # Creează punctele pentru axa X (0, 10, 20, 30...)
+    x_points = list(range(0, len(vehicle_counts)))
+    x_points = [x * 10 for x in x_points]
+    
+    # Creează graficul
+    plt.figure(figsize=(10, 6))
+    plt.plot(x_points, vehicle_counts, 'b-o', linewidth=2, markersize=6)
+    
+    # Setări grafic
+    plt.xlabel('Frame-uri')
+    plt.ylabel('Numărul de vehicule detectate')
+    plt.title('Evoluția Vehiculelor Detectate')
+    plt.grid(True, alpha=0.3)
+    
+    # Salvează
+    plt.savefig(output_path, dpi=100, bbox_inches='tight')
+    plt.close()
+    
+    print(f"Grafic salvat: {output_path}")
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Track vehicles in video using binary or 4-class model')

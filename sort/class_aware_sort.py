@@ -101,4 +101,4 @@ class ClassAwareSort(Sort):
             # Add label as the 6th column
             result.append(np.append(track, label))
         
-        return np.array(result) if len(result) > 0 else np.empty((0, 6))import numpy as np
+        return np.array(result) if len(result) > 0 else np.empty((0, 6))
