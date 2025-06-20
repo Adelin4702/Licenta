@@ -5,7 +5,7 @@ import os
 from torchvision import transforms as T
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torchvision.models.detection as detection
-from sort.sort import Sort, KalmanBoxTracker  # Import SORT tracker and KalmanBoxTracker
+from sort.sort import Sort  # Import SORT tracker
 from roadWidth import get_max_road_width_y
 import datetime
 import torch.nn as nn
@@ -14,15 +14,17 @@ from torchvision.models.detection.rpn import AnchorGenerator
 from torchvision import models
 import argparse
 from db_functions import TrafficDatabase, get_next_hour_timestamp
-import copy
 
 
 def get_least_used_gpu():
     import subprocess
-    result = subprocess.run(["nvidia-smi", "--query-gpu=memory.free", "--format=csv,nounits,noheader"],
-                            stdout=subprocess.PIPE, text=True)
-    free_memory = [int(x) for x in result.stdout.strip().split("\n")]
-    return str(free_memory.index(max(free_memory)))
+    try:
+        result = subprocess.run(["nvidia-smi", "--query-gpu=memory.free", "--format=csv,nounits,noheader"],
+                                stdout=subprocess.PIPE, text=True)
+        free_memory = [int(x) for x in result.stdout.strip().split("\n")]
+        return str(free_memory.index(max(free_memory)))
+    except Exception:
+        return "0"  # Default to first GPU if there's an issue
 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = get_least_used_gpu()
@@ -63,63 +65,6 @@ def convert_to_sort_format(predictions, conf_threshold=0.85):
         return np.array(detections), detection_labels
     else:
         return np.empty((0, 5)), []
-
-
-# --------------------------
-# Extended SORT tracker that preserves detection labels
-class ExtendedSort(Sort):
-    def __init__(self, max_age=30, min_hits=3, iou_threshold=0.3):
-        super().__init__(max_age, min_hits, iou_threshold)
-        self.detection_labels = {}  # Maps detection index to label
-        self.track_to_detection_matches = {}  # Maps track ID to matched detection index
-    
-    def update(self, dets=np.empty((0, 5)), det_labels=None):
-        """
-        Extended update method that also tracks detection labels
-        Params:
-          dets - numpy array of detections [x1,y1,x2,y2,score]
-          det_labels - list of class labels for each detection
-        """
-        # Store detection labels
-        self.detection_labels = {}
-        if det_labels is not None:
-            for i, label in enumerate(det_labels):
-                self.detection_labels[i] = label
-        
-        # Reset matches mapping
-        self.track_to_detection_matches = {}
-        
-        # Call the original update method to get tracks
-        tracks = super().update(dets)
-        
-        # Return tracks
-        return tracks
-    
-    def associate_detections_to_trackers(self, detections, trackers, iou_threshold=0.3):
-        """
-        Override the association method to store matches
-        """
-        matches, unmatched_detections, unmatched_trackers = super().associate_detections_to_trackers(
-            detections, trackers, iou_threshold
-        )
-        
-        # Store track to detection matches
-        for match in matches:
-            det_idx, trk_idx = match
-            tracker = self.trackers[trk_idx]
-            self.track_to_detection_matches[tracker.id] = det_idx
-        
-        return matches, unmatched_detections, unmatched_trackers
-    
-    def get_label_for_track(self, track_id):
-        """
-        Get the detection label for a track
-        """
-        if track_id in self.track_to_detection_matches:
-            det_idx = self.track_to_detection_matches[track_id]
-            if det_idx in self.detection_labels:
-                return self.detection_labels[det_idx]
-        return 0  # Default to background class
 
 
 # --------------------------
@@ -214,12 +159,11 @@ def track(video_path, model_path=None, binary_classification=True):
 
     model = load_model(model_path, num_classes, binary_classification)
     
-    # Use our extended SORT tracker that preserves detection-track associations
-    tracker = ExtendedSort(max_age=30, min_hits=3, iou_threshold=0.3)
+    # Use standard SORT tracker - now supports class labels
+    tracker = Sort(max_age=30, min_hits=3, iou_threshold=0.2)
 
-    # Dictionary to store tracking history (for drawing lines) and label mapping for tracks
+    # Dictionary to store tracking history (for drawing lines)
     track_history = {}
-    track_labels = {}  # track id -> class label
 
     # Define color mapping for each class
     if binary_classification:
@@ -321,21 +265,18 @@ def track(video_path, model_path=None, binary_classification=True):
             # Convert detections to SORT format
             detections, detection_labels = convert_to_sort_format(predictions)
             
-            # Update tracker with detections and their labels
+            # Update tracker with current detections and their labels
             tracked_objects = tracker.update(detections, detection_labels)
             
             # Process tracked objects
+            active_track_ids = set()
             for track in tracked_objects:
-                x1, y1, x2, y2, track_id = map(int, track)
+                # Format: [x1, y1, x2, y2, track_id, class_label]
+                x1, y1, x2, y2, track_id, class_label = track[0], track[1], track[2], track[3], int(track[4]), int(track[5])
+                active_track_ids.add(track_id)
                 
-                # Get label for this track directly from our extended tracker
-                label = tracker.get_label_for_track(track_id)
-                
-                # Store the label
-                track_labels[track_id] = label
-                
-                # Choose color based on assigned label
-                color = color_map.get(label, default_color)
+                # Choose color based on class label
+                color = color_map.get(class_label, default_color)
                 center = (int((x1 + x2) / 2), int((y1 + y2) / 2))
 
                 # Add to track history and draw tracking lines
@@ -348,30 +289,30 @@ def track(video_path, model_path=None, binary_classification=True):
 
                 # Get class name for display
                 if binary_classification:
-                    if label == 0:
+                    if class_label == 0:
                         className = "OTHER"
-                    elif label == 1:
+                    elif class_label == 1:
                         className = "LARGE VEHICLE"
-                    elif label == 2:
+                    elif class_label == 2:
                         className = "SMALL VEHICLE"
                     else:
                         className = "N/A"
                 else:
-                    if label == 0:
+                    if class_label == 0:
                         className = "OTHER"
-                    elif label == 1:
+                    elif class_label == 1:
                         className = "TRUCK"
-                    elif label == 2:
+                    elif class_label == 2:
                         className = "CAR"
-                    elif label == 3:
+                    elif class_label == 3:
                         className = "VAN"
-                    elif label == 4:
+                    elif class_label == 4:
                         className = "BUS"
                     else:
                         className = "N/A"
 
                 # Draw bounding box
-                cv2.rectangle(frame, (x1, y1), (x2, y2), color, 2)
+                cv2.rectangle(frame, (int(x1), int(y1)), (int(x2), int(y2)), color, 2)
 
                 # Check if vehicle crosses the yline
                 lastIndex = len(track_history[track_id]) - 1
@@ -383,27 +324,27 @@ def track(video_path, model_path=None, binary_classification=True):
                             (y_prev > yline and y_current < yline)):  # Ensure correct logical grouping
 
                         if binary_classification:
-                            if label == 0:
+                            if class_label == 0:
                                 other_set.add(track_id)
-                            elif label == 1:  # Large vehicle
+                            elif class_label == 1:  # Large vehicle
                                 large_vehicles_set.add(track_id)
-                            elif label == 2:  # Small vehicle
+                            elif class_label == 2:  # Small vehicle
                                 small_vehicles_set.add(track_id)
                         else:
-                            if label == 0:
+                            if class_label == 0:
                                 other_set.add(track_id)
-                            elif label == 1:  # Truck
+                            elif class_label == 1:  # Truck
                                 trucks_set.add(track_id)
-                            elif label == 2:  # Car
+                            elif class_label == 2:  # Car
                                 cars_set.add(track_id)
-                            elif label == 3:  # Van
+                            elif class_label == 3:  # Van
                                 vans_set.add(track_id)
-                            elif label == 4:  # Bus
+                            elif class_label == 4:  # Bus
                                 busses_set.add(track_id)
 
                 # Draw counting line
                 cv2.line(frame, (0, yline), (width, yline), (255, 0, 0), 2)
-                cv2.putText(frame, f"{className} {track_id}", (x1, y1 - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
+                cv2.putText(frame, f"{className} {track_id}", (int(x1), int(y1) - 10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 2)
 
             # Display vehicle counts
             if binary_classification:
