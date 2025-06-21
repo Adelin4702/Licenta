@@ -129,34 +129,26 @@ def detect_objects(model, frame, device):
 
 
 # --------------------------
-def save_data_and_reset_counters(db, current_time, binary_classification, 
-                                 large_vehicles_set, small_vehicles_set,
-                                 cars_set, vans_set, trucks_set, busses_set):
+def save_data_and_reset_counters(db, camera_id, current_time, large_vehicles_set, small_vehicles_set):
     """Save current data to database and reset counters"""
     print(f"Saving data at: {current_time}")
-    
-    if binary_classification:
-        db.save_binary_data(current_time, len(large_vehicles_set), len(small_vehicles_set))
-        # Reset counters
-        large_vehicles_set.clear()
-        small_vehicles_set.clear()
-    else:
-        db.save_normal_data(current_time, len(cars_set), len(vans_set), len(trucks_set), len(busses_set))
-        # Reset counters
-        cars_set.clear()
-        vans_set.clear()
-        trucks_set.clear()
-        busses_set.clear()
+
+    db.save_binary_data(camera_id, current_time, len(large_vehicles_set), len(small_vehicles_set))
+
+    # Reset counters
+    large_vehicles_set.clear()
+    small_vehicles_set.clear()
+
 
 
 # --------------------------
 # Initialize model and tracker
-def track(video_path, model_path=None, binary_classification=True):
+def track(video_path, model_path=None, camera_id=1, binary_classification=True):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # Use provided model path or default
     if model_path is None:
-        model_path = "/mnt/QNAP/apricop/container/Experiment11/outputs/models/final_model_subset_binary_epoch_5_map_0.7004.pth"
+        model_path = "/mnt/QNAP/apricop/container/Experiment12/outputs/models/final_model_binary_epoch_15_map_0.8302.pth"
 
     # Determine number of classes
     num_classes = 3 if binary_classification else 5  # background + 2 or 4 vehicle classes
@@ -164,6 +156,7 @@ def track(video_path, model_path=None, binary_classification=True):
     model = load_model(model_path, num_classes, binary_classification)
     
     # Use standard SORT tracker - now supports class labels
+    # tracker = ClassAwareSort(max_age=1, min_hits=1)  PENTRU SIMULARE LIPSA TRACKER SI CALCUL IOU FRAME CU FRAME
     tracker = ClassAwareSort()
 
     # Dictionary to store tracking history (for drawing lines)
@@ -250,7 +243,7 @@ def track(video_path, model_path=None, binary_classification=True):
             
             # Check if we've crossed hour boundary
             if current_video_time >= next_hour_timestamp:
-                save_data_and_reset_counters(db, next_hour_timestamp, binary_classification,
+                save_data_and_reset_counters(db, camera_id, next_hour_timestamp, binary_classification,
                                              large_vehicles_set, small_vehicles_set,
                                              cars_set, vans_set, trucks_set, busses_set)
                 next_hour_timestamp = get_next_hour_timestamp(next_hour_timestamp)
@@ -415,7 +408,7 @@ def track(video_path, model_path=None, binary_classification=True):
 
 
     # ------------Cleanup--------------     
-    save_data_and_reset_counters(db, final_timestamp, binary_classification,
+    save_data_and_reset_counters(db, camera_id, final_timestamp, binary_classification,
                               large_vehicles_set, small_vehicles_set,
                               cars_set, vans_set, trucks_set, busses_set)
     cap.release()
@@ -454,9 +447,10 @@ def plot_vehicles(vehicle_counts, output_path="vehicle_chart.png"):
         
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Track vehicles in video using binary or 4-class model')
-    parser.add_argument('video_path', type=str, help='Path to the video file')
+    parser.add_argument('--video_path', type=str, help='Path to the video file')
     parser.add_argument('--model-path', type=str, default=None, help='Path to the model file')
+    parser.add_argument('--camera_id', type=str, default=1, help='The id of the camera recording')
     parser.add_argument('--binary', action='store_true', help='Use binary classification (large/small) model')
 
     args = parser.parse_args()
-    track(args.video_path, args.model_path, args.binary)
+    track(args.video_path, args.model_path, args.camera_id, args.binary)
