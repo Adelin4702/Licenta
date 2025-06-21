@@ -1,5 +1,7 @@
 import sqlite3
 import datetime
+import random
+
 
 class TrafficDatabase:
     def __init__(self, db_path):
@@ -14,92 +16,435 @@ class TrafficDatabase:
         try:
             self.conn = sqlite3.connect(self.db_path)
             self.cursor = self.conn.cursor()
+            # Enable foreign keys
+            self.cursor.execute("PRAGMA foreign_keys = ON")
         except sqlite3.Error as e:
             print(f"Error connecting to database: {e}")
     
     def create_tables(self):
-        """Create tables for traffic data"""
-        # Create table for normal (4-class) model
-        self.cursor.execute('''
-            -- Tabelul City
-            CREATE TABLE city (
-                id INTEGER PRIMARY KEY,
-                city_name VARCHAR(255)
-            );
+        """Create tables for binary traffic data"""
+        try:
+            # Tabelul City
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS city (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    city_name VARCHAR(255) NOT NULL UNIQUE
+                )
+            ''')
 
-            -- Tabelul Location
-            CREATE TABLE location (
-                id INTEGER PRIMARY KEY,
-                city_id INTEGER,
-                road_name VARCHAR(255),
-                road_km INTEGER,
-                FOREIGN KEY (CityId) REFERENCES City(id)
-            );
+            # Tabelul Location
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS location (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    city_id INTEGER NOT NULL,
+                    road_name VARCHAR(255) NOT NULL,
+                    road_km INTEGER,
+                    FOREIGN KEY (city_id) REFERENCES city(id)
+                )
+            ''')
 
-            -- Tabelul Camera
-            CREATE TABLE camera (
-                id INTEGER PRIMARY KEY,
-                location_id INTEGER,
-                model VARCHAR(255),
-                frame_width INTEGER,
-                frame_height INTEGER,
-                fps INTEGER,
-                FOREIGN KEY (LocationId) REFERENCES Location(id)
-            );
+            # Tabelul Camera
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS camera (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    location_id INTEGER NOT NULL,
+                    model VARCHAR(255),
+                    frame_width INTEGER,
+                    frame_height INTEGER,
+                    fps INTEGER,
+                    FOREIGN KEY (location_id) REFERENCES location(id)
+                )
+            ''')
 
-            -- Tabelul Record
-            CREATE TABLE record (
-                id INTEGER PRIMARY KEY,
-                camera_id INTEGER,
-                date TIMESTAMP,
-                nr_of_small_vehicles INTEGER,
-                nr_of_large_vehicles INTEGER,
-                FOREIGN KEY (CameraId) REFERENCES Camera(id)
-            );
-                            
-            -- Inserează date de test
-            INSERT INTO City (city_name) VALUES 
-                ('Cluj-Napoca'),
-                ('București'),
-                ('Timișoara');
-
-            INSERT INTO Location (CityId, road_name, road_km) VALUES 
-                (1, 'Calea Turzii', 15),
-                (1, 'Strada Memorandumului', 3),
-                (2, 'Șoseaua Kiseleff', 8);
-
-            INSERT INTO Camera (LocationId, model, frame_width, frame_height, fps) VALUES 
-                (1, 'Hikvision DS-TCG405', 960, 540, 30),
-                (2, 'Dahua ITC413-RW1F-Z', 1920, 1080, 25);
-
-            INSERT INTO Record (CameraId, date, nr_of_cars, nr_of_vans, nr_of_trucks) VALUES 
-                (1, '2024-01-15 10:30:00', 25, 8, 3),
-                (1, '2024-01-15 11:30:00', 30, 12, 5),
-                (2, '2024-01-15 10:45:00', 18, 6, 2);
-        ''')
-        
-        self.conn.commit()
+            # Tabelul Record pentru date binare
+            self.cursor.execute('''
+                CREATE TABLE IF NOT EXISTS record (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    camera_id INTEGER NOT NULL,
+                    timestamp DATETIME NOT NULL,
+                    nr_of_large_vehicles INTEGER DEFAULT 0,
+                    nr_of_small_vehicles INTEGER DEFAULT 0,
+                    FOREIGN KEY (camera_id) REFERENCES camera(id)
+                )
+            ''')
+            
+            # Inserează date inițiale dacă nu există
+            self.insert_initial_data()
+            self.conn.commit()
+            
+        except sqlite3.Error as e:
+            print(f"Error creating tables: {e}")
     
-    def save_binary_data(self, cameraId, timestamp, large_vehicles, small_vehicles):
-        """Save data from binary model"""
+    def insert_initial_data(self):
+        """Inserează date inițiale în tabele dacă nu există"""
+        try:
+            # Verifică dacă există orașe
+            self.cursor.execute("SELECT COUNT(*) FROM city")
+            if self.cursor.fetchone()[0] == 0:
+                # Inserează orașe
+                cities = [
+                    ('Cluj-Napoca',),
+                    ('București',),
+                    ('Timișoara',),
+                    ('Iași',),
+                    ('Constanța',)
+                ]
+                self.cursor.executemany("INSERT INTO city (city_name) VALUES (?)", cities)
+                
+                # Inserează locații
+                locations = [
+                    (1, 'Calea Turzii', 15),
+                    (1, 'Strada Memorandumului', 3),
+                    (1, 'Calea Florești', 8),
+                    (2, 'Șoseaua Kiseleff', 12),
+                    (2, 'Calea Victoriei', 5),
+                    (3, 'Calea Aradului', 20),
+                ]
+                self.cursor.executemany(
+                    "INSERT INTO location (city_id, road_name, road_km) VALUES (?, ?, ?)", 
+                    locations
+                )
+                
+                # Inserează camere
+                cameras = [
+                    (1, 'Hikvision DS-TCG405', 960, 540, 30),
+                    (2, 'Dahua ITC413-RW1F-Z', 1920, 1080, 25),
+                    (3, 'Axis P1448-LE', 1920, 1080, 30),
+                    (4, 'Bosch MIC IP starlight 7000i', 1920, 1080, 25),
+                    (5, 'Hanwha XNP-6320H', 1920, 1080, 30),
+                ]
+                self.cursor.executemany(
+                    "INSERT INTO camera (location_id, model, frame_width, frame_height, fps) VALUES (?, ?, ?, ?, ?)", 
+                    cameras
+                )
+                
+        except sqlite3.Error as e:
+            print(f"Error inserting initial data: {e}")
+    
+    def save_traffic_data(self, camera_id, timestamp, large_vehicles, small_vehicles):
+        """Salvează date de trafic în baza de date"""
         try:
             self.cursor.execute('''
-                INSERT INTO traffic_data_binary (camera_id, 
-                                                date, 
-                                                nr_of_small_vehicles, 
-                                                nr_of_large_vehicles)
-                VALUES (?, ?, ?)
-            ''', (cameraId, timestamp, large_vehicles, small_vehicles))
+                INSERT INTO record (camera_id, timestamp, nr_of_large_vehicles, nr_of_small_vehicles)
+                VALUES (?, ?, ?, ?)
+            ''', (camera_id, timestamp, large_vehicles, small_vehicles))
             self.conn.commit()
+            return True
         except sqlite3.Error as e:
-            print(f"Error saving binary data: {e}")
+            print(f"Error saving traffic data: {e}")
+            return False
+    
+    def get_dates_with_data(self):
+        """Obține lista de zile care au date înregistrate"""
+        try:
+            self.cursor.execute('''
+                SELECT DISTINCT date(timestamp) as date_only
+                FROM record 
+                ORDER BY date_only DESC
+            ''')
+            return [row[0] for row in self.cursor.fetchall()]
+        except sqlite3.Error as e:
+            print(f"Error getting dates with data: {e}")
+            return []
+    
+    def get_hourly_data(self, date):
+        """Obține date orare pentru o zi specifică"""
+        try:
+            self.cursor.execute('''
+                SELECT strftime('%H', timestamp) as hour,
+                       SUM(nr_of_large_vehicles) as large_vehicles,
+                       SUM(nr_of_small_vehicles) as small_vehicles
+                FROM record
+                WHERE date(timestamp) = ?
+                GROUP BY strftime('%H', timestamp)
+                ORDER BY hour
+            ''', (date,))
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error getting hourly data: {e}")
+            return []
+    
+    def get_week_data_by_range(self, start_date, end_date):
+        """Obține date pentru o săptămână specifică definită prin start_date și end_date"""
+        try:
+            self.cursor.execute('''
+                SELECT date(timestamp) as day,
+                       SUM(nr_of_large_vehicles) as large_vehicles,
+                       SUM(nr_of_small_vehicles) as small_vehicles
+                FROM record
+                WHERE date(timestamp) BETWEEN ? AND ?
+                GROUP BY date(timestamp)
+                ORDER BY day
+            ''', (start_date, end_date))
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error getting week data by range: {e}")
+            return []
+    
+    def get_weekly_data(self, end_date):
+        """Obține date pentru ultimele 7 zile de la data specificată"""
+        try:
+            start_date = (datetime.datetime.strptime(end_date, "%Y-%m-%d") - 
+                         datetime.timedelta(days=6)).strftime("%Y-%m-%d")
+            
+            self.cursor.execute('''
+                SELECT date(timestamp) as day,
+                       SUM(nr_of_large_vehicles) as large_vehicles,
+                       SUM(nr_of_small_vehicles) as small_vehicles
+                FROM record
+                WHERE date(timestamp) BETWEEN ? AND ?
+                GROUP BY date(timestamp)
+                ORDER BY day
+            ''', (start_date, end_date))
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error getting weekly data: {e}")
+            return []
+    
+    def get_monthly_trend(self, month):
+        """Obține tendința orară pentru o lună (YYYY-MM)"""
+        try:
+            self.cursor.execute('''
+                SELECT strftime('%H', timestamp) as hour,
+                       AVG(nr_of_large_vehicles) as avg_large,
+                       AVG(nr_of_small_vehicles) as avg_small
+                FROM record
+                WHERE strftime('%Y-%m', timestamp) = ?
+                GROUP BY strftime('%H', timestamp)
+                ORDER BY hour
+            ''', (month,))
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error getting monthly trend: {e}")
+            return []
+    
+    def get_daily_totals(self, date):
+        """Obține totalurile pentru o zi"""
+        try:
+            self.cursor.execute('''
+                SELECT SUM(nr_of_large_vehicles) as total_large,
+                       SUM(nr_of_small_vehicles) as total_small
+                FROM record
+                WHERE date(timestamp) = ?
+            ''', (date,))
+            result = self.cursor.fetchone()
+            return (result[0] or 0, result[1] or 0)
+        except sqlite3.Error as e:
+            print(f"Error getting daily totals: {e}")
+            return (0, 0)
+    
+    def get_peak_hours_data(self, date):
+        """Obține date pentru analiza orelor de vârf"""
+        try:
+            self.cursor.execute('''
+                SELECT strftime('%H', timestamp) as hour,
+                       SUM(nr_of_large_vehicles) as large_vehicles,
+                       SUM(nr_of_small_vehicles) as small_vehicles
+                FROM record
+                WHERE date(timestamp) = ?
+                GROUP BY strftime('%H', timestamp)
+                ORDER BY hour
+            ''', (date,))
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error getting peak hours data: {e}")
+            return []
+    
+    def get_cameras_info(self):
+        """Obține informații despre toate camerele"""
+        try:
+            self.cursor.execute('''
+                SELECT c.id, c.model, c.frame_width, c.frame_height, c.fps,
+                       l.road_name, l.road_km, city.city_name
+                FROM camera c
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                ORDER BY city.city_name, l.road_name
+            ''')
+            return self.cursor.fetchall()
+        except sqlite3.Error as e:
+            print(f"Error getting cameras info: {e}")
+            return []
+    
+    def get_statistics_summary(self, start_date=None, end_date=None):
+        """Obține sumar de statistici pentru o perioadă"""
+        try:
+            base_query = '''
+                SELECT 
+                    COUNT(*) as total_records,
+                    SUM(nr_of_large_vehicles) as total_large,
+                    SUM(nr_of_small_vehicles) as total_small,
+                    AVG(nr_of_large_vehicles) as avg_large,
+                    AVG(nr_of_small_vehicles) as avg_small,
+                    MAX(nr_of_large_vehicles + nr_of_small_vehicles) as max_total,
+                    MIN(timestamp) as first_record,
+                    MAX(timestamp) as last_record
+                FROM record
+            '''
+            
+            if start_date and end_date:
+                query = base_query + " WHERE date(timestamp) BETWEEN ? AND ?"
+                self.cursor.execute(query, (start_date, end_date))
+            elif start_date:
+                query = base_query + " WHERE date(timestamp) >= ?"
+                self.cursor.execute(query, (start_date,))
+            elif end_date:
+                query = base_query + " WHERE date(timestamp) <= ?"
+                self.cursor.execute(query, (end_date,))
+            else:
+                self.cursor.execute(base_query)
+            
+            return self.cursor.fetchone()
+        except sqlite3.Error as e:
+            print(f"Error getting statistics summary: {e}")
+            return None
+    
+    def generate_test_data(self, days=7, camera_id=1):
+        """Generează date de test pentru un număr specificat de zile"""
+        try:
+            base_date = datetime.datetime.now() - datetime.timedelta(days=days)
+            
+            for day in range(days):
+                current_date = base_date + datetime.timedelta(days=day)
+                for hour in range(24):
+                    current_datetime = current_date.replace(hour=hour, minute=0, second=0, microsecond=0)
+                    
+                    # Generare date realiste bazate pe ora
+                    if 7 <= hour <= 9 or 16 <= hour <= 18:  # Ore de vârf
+                        large_vehicles = random.randint(15, 45)
+                        small_vehicles = random.randint(200, 400)
+                    elif 22 <= hour or hour <= 5:  # Noapte
+                        large_vehicles = random.randint(2, 8)
+                        small_vehicles = random.randint(10, 30)
+                    else:  # Ore normale
+                        large_vehicles = random.randint(5, 20)
+                        small_vehicles = random.randint(50, 150)
+                    
+                    # Variabilitate aleatoare
+                    large_vehicles += random.randint(-3, 3)
+                    small_vehicles += random.randint(-20, 20)
+                    
+                    # Asigură valori pozitive
+                    large_vehicles = max(0, large_vehicles)
+                    small_vehicles = max(0, small_vehicles)
+                    
+                    self.save_traffic_data(camera_id, current_datetime, large_vehicles, small_vehicles)
+            
+            return True
+        except Exception as e:
+            print(f"Error generating test data: {e}")
+            return False
+    
+    def delete_old_data(self, days_to_keep=30):
+        """Șterge datele mai vechi de un număr specificat de zile"""
+        try:
+            cutoff_date = datetime.datetime.now() - datetime.timedelta(days=days_to_keep)
+            self.cursor.execute('''
+                DELETE FROM record 
+                WHERE timestamp < ?
+            ''', (cutoff_date,))
+            deleted_rows = self.cursor.rowcount
+            self.conn.commit()
+            return deleted_rows
+        except sqlite3.Error as e:
+            print(f"Error deleting old data: {e}")
+            return 0
+    
+    def backup_data(self, backup_path):
+        """Creează backup al bazei de date"""
+        try:
+            backup_conn = sqlite3.connect(backup_path)
+            self.conn.backup(backup_conn)
+            backup_conn.close()
+            return True
+        except sqlite3.Error as e:
+            print(f"Error creating backup: {e}")
+            return False
+    
+    def get_database_info(self):
+        """Obține informații generale despre baza de date"""
+        try:
+            info = {}
+            
+            # Numărul de înregistrări
+            self.cursor.execute("SELECT COUNT(*) FROM record")
+            info['total_records'] = self.cursor.fetchone()[0]
+            
+            # Numărul de camere
+            self.cursor.execute("SELECT COUNT(*) FROM camera")
+            info['total_cameras'] = self.cursor.fetchone()[0]
+            
+            # Perioada de date
+            self.cursor.execute("SELECT MIN(timestamp), MAX(timestamp) FROM record")
+            period = self.cursor.fetchone()
+            info['first_record'] = period[0]
+            info['last_record'] = period[1]
+            
+            # Mărimea bazei de date
+            self.cursor.execute("SELECT page_count * page_size as size FROM pragma_page_count(), pragma_page_size()")
+            info['database_size'] = self.cursor.fetchone()[0]
+            
+            return info
+        except sqlite3.Error as e:
+            print(f"Error getting database info: {e}")
+            return {}
     
     def close(self):
-        """Close database connection"""
+        """Închide conexiunea la baza de date"""
         if self.conn:
             self.conn.close()
 
+
 def get_next_hour_timestamp(current_time):
-    """Calculate next hour timestamp (e.g., 12:00:00)"""
+    """Calculează timestamp-ul pentru următoarea oră"""
     next_hour = current_time.replace(minute=0, second=0, microsecond=0) + datetime.timedelta(hours=1)
     return next_hour
+
+
+def format_timestamp(timestamp):
+    """Formatează timestamp-ul pentru afișare"""
+    if isinstance(timestamp, str):
+        timestamp = datetime.datetime.strptime(timestamp, "%Y-%m-%d %H:%M:%S")
+    return timestamp.strftime("%d/%m/%Y %H:%M")
+
+
+def validate_traffic_data(large_vehicles, small_vehicles):
+    """Validează datele de trafic"""
+    if not isinstance(large_vehicles, int) or not isinstance(small_vehicles, int):
+        return False, "Datele trebuie să fie numere întregi"
+    
+    if large_vehicles < 0 or small_vehicles < 0:
+        return False, "Numărul de vehicule nu poate fi negativ"
+    
+    if large_vehicles > 1000 or small_vehicles > 5000:
+        return False, "Numărul de vehicule pare neobișnuit de mare"
+    
+    return True, "Date valide"
+
+
+# Funcții utilitare pentru integrare cu tracker-ul
+def save_tracker_data(db_path, camera_id, timestamp, large_count, small_count):
+    """Funcție simplă pentru salvarea datelor din tracker"""
+    db = TrafficDatabase(db_path)
+    success = db.save_traffic_data(camera_id, timestamp, large_count, small_count)
+    db.close()
+    return success
+
+
+def get_latest_records(db_path, limit=10):
+    """Obține ultimele înregistrări din baza de date"""
+    db = TrafficDatabase(db_path)
+    try:
+        db.cursor.execute('''
+            SELECT timestamp, nr_of_large_vehicles, nr_of_small_vehicles
+            FROM record
+            ORDER BY timestamp DESC
+            LIMIT ?
+        ''', (limit,))
+        records = db.cursor.fetchall()
+        db.close()
+        return records
+    except sqlite3.Error as e:
+        print(f"Error getting latest records: {e}")
+        db.close()
+        return []
