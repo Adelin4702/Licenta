@@ -133,7 +133,7 @@ def save_data_and_reset_counters(db, camera_id, current_time, large_vehicles_set
     """Save current data to database and reset counters"""
     print(f"Saving data at: {current_time}")
 
-    db.save_binary_data(camera_id, current_time, len(large_vehicles_set), len(small_vehicles_set))
+    db.save_traffic_data(camera_id, current_time, len(large_vehicles_set), len(small_vehicles_set))
 
     # Reset counters
     large_vehicles_set.clear()
@@ -156,7 +156,7 @@ def track(video_path, model_path=None, camera_id=1, binary_classification=True):
     model = load_model(model_path, num_classes, binary_classification)
     
     # Use standard SORT tracker - now supports class labels
-    # tracker = ClassAwareSort(max_age=1, min_hits=1)  PENTRU SIMULARE LIPSA TRACKER SI CALCUL IOU FRAME CU FRAME
+    # tracker = ClassAwareSort(max_age=1, min_hits=1)  #PENTRU SIMULARE LIPSA TRACKER SI CALCUL IOU FRAME CU FRAME
     tracker = ClassAwareSort()
 
     # Dictionary to store tracking history (for drawing lines)
@@ -408,9 +408,7 @@ def track(video_path, model_path=None, camera_id=1, binary_classification=True):
 
 
     # ------------Cleanup--------------     
-    save_data_and_reset_counters(db, camera_id, final_timestamp, binary_classification,
-                              large_vehicles_set, small_vehicles_set,
-                              cars_set, vans_set, trucks_set, busses_set)
+    save_data_and_reset_counters(db, camera_id, final_timestamp, large_vehicles_set, small_vehicles_set)
     cap.release()
     out.release()
     db.close()

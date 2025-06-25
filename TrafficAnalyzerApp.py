@@ -3,7 +3,6 @@ from tkinter import ttk, messagebox
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 import datetime
-from matplotlib.figure import Figure
 from tkcalendar import Calendar
 import numpy as np
 from db_functions import TrafficDatabase
@@ -63,91 +62,13 @@ class BinaryTrafficAnalyzerApp:
         # Configure root background
         self.root.configure(bg=self.colors['background'])
         
-        # Header styles
-        self.style.configure('Header.TFrame', 
-                           background=self.colors['surface'],
-                           relief='flat',
-                           borderwidth=0)
-        
-        self.style.configure('Title.TLabel', 
-                           font=('Segoe UI', 28, 'bold'),
-                           background=self.colors['surface'],
-                           foreground=self.colors['primary'])
-        
-        self.style.configure('Subtitle.TLabel', 
-                           font=('Segoe UI', 14),
-                           background=self.colors['surface'],
-                           foreground=self.colors['secondary'])
-        
-        # Card styles
-        self.style.configure('Card.TFrame', 
-                           background=self.colors['surface'],
-                           relief='solid',
-                           borderwidth=1)
-        
-        self.style.configure('CardHeader.TLabel', 
-                           font=('Segoe UI', 16, 'bold'),
-                           background=self.colors['surface'],
-                           foreground=self.colors['dark'])
-        
-        # Control styles
-        self.style.configure('Modern.TLabelframe', 
-                           background=self.colors['surface'],
-                           relief='flat',
-                           borderwidth=2,
-                           labeloutside=False)
-        
-        self.style.configure('Modern.TLabelframe.Label', 
-                           font=('Segoe UI', 14, 'bold'),
-                           background=self.colors['surface'],
-                           foreground=self.colors['primary'])
-        
-        # Button styles
-        self.style.configure('Primary.TButton',
-                           font=('Segoe UI', 11, 'bold'),
-                           padding=(20, 12),
-                           background=self.colors['primary'],
-                           foreground='white',
-                           borderwidth=0,
-                           focuscolor='none')
-        
-        self.style.map('Primary.TButton',
-                      background=[('active', '#1d4ed8'),
-                                ('pressed', '#1e3a8a')])
-        
-        self.style.configure('Success.TButton',
-                           font=('Segoe UI', 11, 'bold'),
-                           padding=(20, 12),
-                           background=self.colors['success'],
-                           foreground='white',
-                           borderwidth=0,
-                           focuscolor='none')
-        
         # Combobox style
         self.style.configure('Modern.TCombobox',
-                           font=('Segoe UI', 11),
-                           padding=10,
+                           font=('Segoe UI', 10),
+                           padding=8,
                            fieldbackground=self.colors['light'],
                            borderwidth=1,
                            relief='solid')
-        
-        # Stats label styles
-        self.style.configure('Stat.TLabel',
-                           font=('Segoe UI', 12),
-                           background=self.colors['surface'],
-                           foreground=self.colors['dark'],
-                           padding=(10, 5))
-        
-        self.style.configure('StatTitle.TLabel',
-                           font=('Segoe UI', 14, 'bold'),
-                           background=self.colors['surface'],
-                           foreground=self.colors['primary'],
-                           padding=(10, 8))
-        
-        self.style.configure('StatValue.TLabel',
-                           font=('Segoe UI', 18, 'bold'),
-                           background=self.colors['surface'],
-                           foreground=self.colors['dark'])
         
     def create_modern_gui(self):
         """Create modern, professional GUI"""
@@ -162,9 +83,9 @@ class BinaryTrafficAnalyzerApp:
         content_frame = tk.Frame(main_frame, bg=self.colors['background'])
         content_frame.pack(fill=tk.BOTH, expand=True, pady=(20, 0))
         
-        # Left panel (controls)
-        left_panel = tk.Frame(content_frame, bg=self.colors['background'], width=400)
-        left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 20))
+        # Left panel (controls) - made smaller
+        left_panel = tk.Frame(content_frame, bg=self.colors['background'], width=320)
+        left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 15))
         left_panel.pack_propagate(False)
         
         # Right panel (visualization)
@@ -231,30 +152,27 @@ class BinaryTrafficAnalyzerApp:
         # Controls card
         self.create_controls_card(parent)
         
-        # Quick stats card
-        self.create_quick_stats_card(parent)
-        
     def create_calendar_card(self, parent):
-        """Create calendar card with modern styling"""
+        """Create compact calendar card"""
         card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        card_frame.pack(fill=tk.X, pady=(0, 20))
+        card_frame.pack(fill=tk.X, pady=(0, 15))
         
-        # Card header
-        header_frame = tk.Frame(card_frame, bg=self.colors['primary'], height=50)
+        # Compact card header
+        header_frame = tk.Frame(card_frame, bg=self.colors['primary'], height=35)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
-        header_label = tk.Label(header_frame, text="📅 Selectează Data",
-                               font=('Segoe UI', 14, 'bold'),
+        header_label = tk.Label(header_frame, text="📅 Data",
+                               font=('Segoe UI', 12, 'bold'),
                                bg=self.colors['primary'],
                                fg='white')
         header_label.pack(expand=True)
         
-        # Calendar content
+        # Calendar content - more compact
         calendar_content = tk.Frame(card_frame, bg=self.colors['surface'])
-        calendar_content.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        calendar_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
         
-        # Calendar widget with modern styling
+        # Smaller calendar widget
         self.calendar = Calendar(
             calendar_content,
             selectmode='day',
@@ -273,39 +191,39 @@ class BinaryTrafficAnalyzerApp:
             normalforeground=self.colors['dark'],
             weekendbackground=self.colors['surface'],
             weekendforeground=self.colors['muted'],
-            font=('Segoe UI', 10)
+            font=('Segoe UI', 8)  # Smaller font
         )
-        self.calendar.pack(pady=10)
+        self.calendar.pack(pady=5)
         
         self.update_calendar_marks()
         self.calendar.bind("<<CalendarSelected>>", self.on_date_select)
         
     def create_controls_card(self, parent):
-        """Create controls card"""
+        """Create compact controls card"""
         card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        card_frame.pack(fill=tk.X, pady=(0, 20))
+        card_frame.pack(fill=tk.X, pady=(0, 15))
         
-        # Card header
-        header_frame = tk.Frame(card_frame, bg=self.colors['info'], height=50)
+        # Compact card header
+        header_frame = tk.Frame(card_frame, bg=self.colors['info'], height=35)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
-        header_label = tk.Label(header_frame, text="⚙️ Opțiuni Vizualizare",
-                               font=('Segoe UI', 14, 'bold'),
+        header_label = tk.Label(header_frame, text="⚙️ Opțiuni",
+                               font=('Segoe UI', 12, 'bold'),
                                bg=self.colors['info'],
                                fg='white')
         header_label.pack(expand=True)
         
-        # Controls content
+        # Controls content - more compact
         controls_content = tk.Frame(card_frame, bg=self.colors['surface'])
-        controls_content.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        controls_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
         
-        # View type selector with modern styling
+        # View type selector with compact styling
         view_label = tk.Label(controls_content, text="Tip vizualizare:",
-                             font=('Segoe UI', 12, 'bold'),
+                             font=('Segoe UI', 10, 'bold'),
                              bg=self.colors['surface'],
                              fg=self.colors['dark'])
-        view_label.pack(anchor='w', pady=(0, 8))
+        view_label.pack(anchor='w', pady=(0, 5))
         
         self.view_type = ttk.Combobox(controls_content, 
                                      values=[
@@ -316,32 +234,32 @@ class BinaryTrafficAnalyzerApp:
                                          "📅 Tendință lunară"
                                      ],
                                      state="readonly",
-                                     font=('Segoe UI', 11),
+                                     font=('Segoe UI', 10),
                                      style='Modern.TCombobox')
         self.view_type.set("📊 Trafic orar")
-        self.view_type.pack(fill=tk.X, pady=(0, 20))
+        self.view_type.pack(fill=tk.X, pady=(0, 15))
         self.view_type.bind("<<ComboboxSelected>>", self.generate_visualization)
         
-        # Action buttons with modern styling
+        # Compact action buttons
         button_frame = tk.Frame(controls_content, bg=self.colors['surface'])
         button_frame.pack(fill=tk.X)
         
         generate_btn = tk.Button(button_frame, text="🔄 Actualizează",
-                               font=('Segoe UI', 11, 'bold'),
+                               font=('Segoe UI', 10, 'bold'),
                                bg=self.colors['primary'],
                                fg='white',
                                relief='flat',
-                               padx=20, pady=12,
+                               padx=15, pady=8,
                                cursor='hand2',
                                command=self.generate_visualization)
-        generate_btn.pack(fill=tk.X, pady=(0, 10))
+        generate_btn.pack(fill=tk.X, pady=(0, 8))
         
-        test_data_btn = tk.Button(button_frame, text="🔧 Generare Date Test",
-                                font=('Segoe UI', 11, 'bold'),
+        test_data_btn = tk.Button(button_frame, text="🔧 Date Test",
+                                font=('Segoe UI', 10, 'bold'),
                                 bg=self.colors['success'],
                                 fg='white',
                                 relief='flat',
-                                padx=20, pady=12,
+                                padx=15, pady=8,
                                 cursor='hand2',
                                 command=self.add_test_data)
         test_data_btn.pack(fill=tk.X)
@@ -357,127 +275,94 @@ class BinaryTrafficAnalyzerApp:
         test_data_btn.bind("<Enter>", lambda e: on_enter(e, test_data_btn, '#047857'))
         test_data_btn.bind("<Leave>", lambda e: on_leave(e, test_data_btn, self.colors['success']))
         
-    def create_quick_stats_card(self, parent):
-        """Create quick stats card"""
-        card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        card_frame.pack(fill=tk.X)
-        
-        # Card header
-        header_frame = tk.Frame(card_frame, bg=self.colors['accent'], height=50)
-        header_frame.pack(fill=tk.X)
-        header_frame.pack_propagate(False)
-        
-        header_label = tk.Label(header_frame, text="📊 Statistici Rapide",
-                               font=('Segoe UI', 14, 'bold'),
-                               bg=self.colors['accent'],
-                               fg='white')
-        header_label.pack(expand=True)
-        
-        # Stats content
-        self.quick_stats_content = tk.Frame(card_frame, bg=self.colors['surface'])
-        self.quick_stats_content.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
-        
-        # Default message
-        default_label = tk.Label(self.quick_stats_content,
-                               text="Selectează o dată pentru\na vedea statisticile",
-                               font=('Segoe UI', 11),
-                               bg=self.colors['surface'],
-                               fg=self.colors['muted'],
-                               justify=tk.CENTER)
-        default_label.pack(expand=True)
-        
     def create_visualization_panel(self, parent):
-        """Create visualization panel"""
+        """Create visualization panel with optimized layout"""
         # Main visualization card
         viz_card = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
         viz_card.pack(fill=tk.BOTH, expand=True)
         
         # Card header
-        header_frame = tk.Frame(viz_card, bg=self.colors['dark'], height=60)
+        header_frame = tk.Frame(viz_card, bg=self.colors['dark'], height=50)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         self.viz_title = tk.Label(header_frame, text="📈 Vizualizare Trafic",
-                                 font=('Segoe UI', 16, 'bold'),
+                                 font=('Segoe UI', 14, 'bold'),
                                  bg=self.colors['dark'],
                                  fg='white')
         self.viz_title.pack(expand=True)
         
-        # Visualization content area
-        viz_content = tk.Frame(viz_card, bg=self.colors['surface'])
-        viz_content.pack(fill=tk.BOTH, expand=True)
+        # Content container with horizontal split
+        content_container = tk.Frame(viz_card, bg=self.colors['surface'])
+        content_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
-        # Graph area
-        self.graph_frame = tk.Frame(viz_content, bg=self.colors['light'])
-        self.graph_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        # Graph area - takes 70% of width
+        self.graph_frame = tk.Frame(content_container, bg=self.colors['light'])
+        self.graph_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 0))
         
         # Initial placeholder
         placeholder_label = tk.Label(self.graph_frame,
                                     text="🎯\nSelectează o opțiune de vizualizare\npentru a începe analiza",
-                                    font=('Segoe UI', 16),
+                                    font=('Segoe UI', 14),
                                     bg=self.colors['light'],
                                     fg=self.colors['muted'],
                                     justify=tk.CENTER)
         placeholder_label.pack(expand=True)
         
-        # Detailed stats area (collapsible)
-        self.create_stats_panel(viz_card)
+        # Text-based stats area - takes 30% of width
+        self.create_compact_stats_panel(content_container)
         
-    def create_stats_panel(self, parent):
-        """Create expandable stats panel"""
-        # Stats toggle button
-        self.stats_visible = tk.BooleanVar(value=True)
+    def create_compact_stats_panel(self, parent):
+        """Create compact stats panel on the right side"""
+        # Stats frame with fixed width - 30% of space
+        stats_container = tk.Frame(parent, bg=self.colors['surface'], width=250)
+        stats_container.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
+        stats_container.pack_propagate(False)
         
-        toggle_frame = tk.Frame(parent, bg=self.colors['surface'])
-        toggle_frame.pack(fill=tk.X, padx=20)
+        # Stats header
+        stats_header = tk.Frame(stats_container, bg=self.colors['primary'], height=35)
+        stats_header.pack(fill=tk.X)
+        stats_header.pack_propagate(False)
         
-        self.toggle_btn = tk.Button(toggle_frame, text="📊 Ascunde Statistici Detaliate",
-                                   font=('Segoe UI', 11, 'bold'),
-                                   bg=self.colors['secondary'],
-                                   fg='white',
-                                   relief='flat',
-                                   pady=8,
-                                   cursor='hand2',
-                                   command=self.toggle_stats)
-        self.toggle_btn.pack(fill=tk.X)
+        tk.Label(stats_header, text="📊 Statistici",
+                font=('Segoe UI', 12, 'bold'),
+                bg=self.colors['primary'],
+                fg='white').pack(expand=True)
         
-        # Stats content with scrollbar
-        self.stats_container = tk.Frame(parent, bg=self.colors['surface'])
-        self.stats_container.pack(fill=tk.BOTH, padx=20, pady=(0, 20))
-        
-        # Create scrollable frame
-        canvas = tk.Canvas(self.stats_container, bg=self.colors['light'], highlightthickness=0)
-        scrollbar = ttk.Scrollbar(self.stats_container, orient="vertical", command=canvas.yview)
+        # Scrollable stats content
+        canvas = tk.Canvas(stats_container, bg=self.colors['surface'], highlightthickness=0)
+        scrollbar = ttk.Scrollbar(stats_container, orient="vertical", command=canvas.yview)
         
         scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True)
+        canvas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
         
         canvas.configure(yscrollcommand=scrollbar.set)
         
-        self.stats_frame = tk.Frame(canvas, bg=self.colors['light'])
-        canvas_window = canvas.create_window((0, 0), window=self.stats_frame, anchor="nw")
+        # Text stats container
+        self.text_stats_frame = tk.Frame(canvas, bg=self.colors['surface'])
+        canvas_window = canvas.create_window((0, 0), window=self.text_stats_frame, anchor="nw")
         
         def configure_scroll(event):
             canvas.configure(scrollregion=canvas.bbox("all"))
             canvas.itemconfig(canvas_window, width=event.width)
             
         canvas.bind('<Configure>', configure_scroll)
+        self.text_stats_frame.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
         
         # Mouse wheel scrolling
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         canvas.bind_all("<MouseWheel>", _on_mousewheel)
         
-    def toggle_stats(self):
-        """Toggle stats panel visibility"""
-        if self.stats_visible.get():
-            self.stats_container.pack_forget()
-            self.toggle_btn.configure(text="📊 Arată Statistici Detaliate")
-            self.stats_visible.set(False)
-        else:
-            self.stats_container.pack(fill=tk.BOTH, padx=20, pady=(0, 20))
-            self.toggle_btn.configure(text="📊 Ascunde Statistici Detaliate")
-            self.stats_visible.set(True)
+        # Default message
+        default_label = tk.Label(self.text_stats_frame,
+                               text="📈 Statisticile detaliate vor apărea aici după selectarea unei vizualizări.",
+                               font=('Segoe UI', 10),
+                               bg=self.colors['surface'],
+                               fg=self.colors['muted'],
+                               wraplength=320,
+                               justify=tk.CENTER)
+        default_label.pack(expand=True, pady=20)
             
     def update_calendar_marks(self):
         """Mark days with data in calendar"""
@@ -502,55 +387,54 @@ class BinaryTrafficAnalyzerApp:
             self.dates_with_data = self.db.get_dates_with_data()
             self.update_calendar_marks()
             messagebox.showinfo("✅ Succes", "Date de test adăugate cu succes!")
-            # Update status in header
-            self.update_header_status()
         else:
             messagebox.showerror("❌ Eroare", "Eroare la adăugarea datelor de test!")
             
-    def update_header_status(self):
-        """Update header status"""
-        # This would update the status indicator in the header
-        pass
+    def format_date(self, date_str):
+        """Format date string yyyy-mm-dd to dd/mm/yyyy"""
+        try:
+            return datetime.datetime.strptime(date_str, "%Y-%m-%d").strftime("%d/%m/%Y")
+        except Exception:
+            return date_str
         
     def generate_visualization(self, event=None):
         """Generate selected visualization with modern styling"""
         # Clear existing content
         for widget in self.graph_frame.winfo_children():
             widget.destroy()
-        for widget in self.stats_frame.winfo_children():
-            widget.destroy()
-        for widget in self.quick_stats_content.winfo_children():
+        for widget in self.text_stats_frame.winfo_children():
             widget.destroy()
             
         view_type = self.view_type.get()
         date = self.selected_date
-        
-        # Update visualization title
-        self.viz_title.configure(text=f"📈 {view_type} - {date}")
+        formatted_date = self.format_date(date)
+        self.viz_title.configure(text=f"{view_type}")
         
         if "Trafic orar" in view_type:
-            self.generate_modern_hourly_view(date)
+            self.generate_modern_hourly_view(date, formatted_date)
         elif "Trafic săptămânal" in view_type:
-            self.generate_modern_weekly_view(date)
+            self.generate_modern_weekly_view(date, formatted_date)
         elif "Tendință lunară" in view_type:
-            self.generate_modern_monthly_trend(date)
+            self.generate_modern_monthly_trend(date, formatted_date)
         elif "Distribuție procentuală" in view_type:
-            self.generate_modern_percentage_distribution(date)
+            self.generate_modern_percentage_distribution(date, formatted_date)
         elif "Comparație ore de vârf" in view_type:
-            self.generate_modern_peak_hours_comparison(date)
-            
-    def create_modern_figure(self, width=3, height=3):
-        """Create modern styled figure"""
+            self.generate_modern_peak_hours_comparison(date, formatted_date)
+
+    def create_modern_figure(self, width=8, height=6):
+        """Create modern styled figure with optimized dimensions"""
+        from matplotlib.figure import Figure
         fig = Figure(figsize=(width, height), 
                     facecolor=self.colors['surface'],
-                    edgecolor='none')
+                    edgecolor='none',
+                    tight_layout=True)
         
         # Add subtle border
         fig.patch.set_linewidth(0)
         
         return fig
         
-    def generate_modern_hourly_view(self, date):
+    def generate_modern_hourly_view(self, date, formatted_date):
         """Generate modern hourly view"""
         data = self.db.get_hourly_data(date)
         
@@ -573,14 +457,14 @@ class BinaryTrafficAnalyzerApp:
         
         # Create bars with modern colors
         bars1 = ax.bar([i - width/2 for i in x], vehicule_mari, width,
-                      label='🚛 Vehicule Mari', 
+                      label='Vehicule Mari', 
                       color=self.colors['danger'],
                       alpha=0.9,
                       edgecolor='white',
                       linewidth=1)
         
         bars2 = ax.bar([i + width/2 for i in x], vehicule_mici, width,
-                      label='🚗 Vehicule Mici',
+                      label='Vehicule Mici',
                       color=self.colors['success'], 
                       alpha=0.9,
                       edgecolor='white',
@@ -600,7 +484,7 @@ class BinaryTrafficAnalyzerApp:
         # Modern styling
         ax.set_xlabel('Ora zilei', fontsize=12, fontweight='bold', color=self.colors['dark'])
         ax.set_ylabel('Numărul de vehicule', fontsize=12, fontweight='bold', color=self.colors['dark'])
-        ax.set_title(f'Analiza traficului orar\n{date}', fontsize=16, fontweight='bold', 
+        ax.set_title(f'Analiza traficului orar\n{formatted_date}', fontsize=16, fontweight='bold', 
                     color=self.colors['primary'], pad=20)
         
         ax.set_xticks(x)
@@ -622,184 +506,70 @@ class BinaryTrafficAnalyzerApp:
         ax.spines['bottom'].set_color(self.colors['muted'])
         
         # Adjust layout
-        fig.tight_layout(pad=2.0)
+        fig.tight_layout(pad=1.0)
         
-        # Display chart
+        # Display chart with optimized sizing
         canvas = FigureCanvasTkAgg(fig, self.graph_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=0, pady=1)
         
-        # Generate modern stats
-        self.generate_modern_hourly_stats(vehicule_mari, vehicule_mici, hours, date)
+        # Generate modern stats with text format
+        self.generate_modern_hourly_stats_text(vehicule_mari, vehicule_mici, hours, formatted_date)
         
-    def generate_modern_hourly_stats(self, vehicule_mari, vehicule_mici, hours, date):
-        """Generate modern statistics for hourly view"""
+    def generate_modern_hourly_stats_text(self, vehicule_mari, vehicule_mici, hours, formatted_date):
+        """Generate compact text-based statistics for hourly view"""
+        # Clear existing stats
+        for widget in self.text_stats_frame.winfo_children():
+            widget.destroy()
+        
         total_mari = sum(vehicule_mari)
         total_mici = sum(vehicule_mici)
         total = total_mari + total_mici
         
-        # Quick stats card
-        self.create_quick_stat_cards(total, total_mari, total_mici)
+        # Create compact text-based detailed stats
+        stats_text = f"""📊 STATISTICI {formatted_date}
+
+🚦 TOTALURI:
+    Total: {total:,} vehicule
+    Mari: {total_mari:,} ({(total_mari/total*100) if total > 0 else 0:.1f}%)
+    Mici: {total_mici:,} ({(total_mici/total*100) if total > 0 else 0:.1f}%)
+
+⏰ ORE DE VÂRF:"""
         
-        # Detailed stats
-        stats_container = tk.Frame(self.stats_frame, bg=self.colors['light'])
-        stats_container.pack(fill=tk.X, padx=10, pady=10)
-        
-        # Title
-        title_label = tk.Label(stats_container, 
-                              text=f"📊 Analiză Detaliată - {date}",
-                              font=('Segoe UI', 16, 'bold'),
-                              bg=self.colors['light'],
-                              fg=self.colors['primary'])
-        title_label.pack(anchor='w', pady=(0, 15))
-        
-        # Create stat boxes
-        stats_grid = tk.Frame(stats_container, bg=self.colors['light'])
-        stats_grid.pack(fill=tk.X, pady=10)
-        
-        # Statistics data
-        stats_data = [
-            ("🚛 Total Vehicule Mari", f"{total_mari:,}", self.colors['danger']),
-            ("🚗 Total Vehicule Mici", f"{total_mici:,}", self.colors['success']),
-            ("📈 Procentaj Vehicule Mari", f"{(total_mari/total*100) if total > 0 else 0:.1f}%", self.colors['warning']),
-            ("📈 Procentaj Vehicule Mici", f"{(total_mici/total*100) if total > 0 else 0:.1f}%", self.colors['info'])
-        ]
-        
-        for i, (label, value, color) in enumerate(stats_data):
-            self.create_stat_box(stats_grid, label, value, color, row=i//2, col=i%2)
-        
-        # Peak hour analysis
         if vehicule_mici and vehicule_mari:
             peak_hour_mici_idx = vehicule_mici.index(max(vehicule_mici))
             peak_hour_mari_idx = vehicule_mari.index(max(vehicule_mari))
             peak_hour_mici = hours[peak_hour_mici_idx]
             peak_hour_mari = hours[peak_hour_mari_idx]
             
-            # Peak hours section
-            peak_section = tk.Frame(stats_container, bg=self.colors['surface'], relief='solid', bd=1)
-            peak_section.pack(fill=tk.X, pady=(15, 0))
+            stats_text += f"""
+    🚗 Vehicule mici: {peak_hour_mici}:00 ({max(vehicule_mici)})
+    🚛 Vehicule mari: {peak_hour_mari}:00 ({max(vehicule_mari)})
+    📈 Medie: {total/len(hours):.1f}/oră
+
+📋 DISTRIBUȚIA ORARĂ:"""
             
-            peak_header = tk.Frame(peak_section, bg=self.colors['primary'], height=40)
-            peak_header.pack(fill=tk.X)
-            peak_header.pack_propagate(False)
-            
-            peak_title = tk.Label(peak_header, text="⏰ Analiza Orelor de Vârf",
-                                 font=('Segoe UI', 14, 'bold'),
-                                 bg=self.colors['primary'],
-                                 fg='white')
-            peak_title.pack(expand=True)
-            
-            peak_content = tk.Frame(peak_section, bg=self.colors['surface'])
-            peak_content.pack(fill=tk.X, padx=15, pady=15)
-            
-            peak_stats = [
-                (f"🚗 Ora de vârf vehicule mici: {peak_hour_mici}:00", f"{max(vehicule_mici)} vehicule"),
-                (f"🚛 Ora de vârf vehicule mari: {peak_hour_mari}:00", f"{max(vehicule_mari)} vehicule"),
-                (f"📊 Medie orară total", f"{total/len(hours):.1f} vehicule"),
-                (f"🎯 Eficiența traficului", f"{(max(vehicule_mici + vehicule_mari)/sum(vehicule_mici + vehicule_mari)*100):.1f}%")
-            ]
-            
-            for stat_text, stat_value in peak_stats:
-                stat_row = tk.Frame(peak_content, bg=self.colors['surface'])
-                stat_row.pack(fill=tk.X, pady=5)
-                
-                tk.Label(stat_row, text=stat_text,
-                        font=('Segoe UI', 11),
-                        bg=self.colors['surface'],
-                        fg=self.colors['dark']).pack(side=tk.LEFT)
-                
-                tk.Label(stat_row, text=stat_value,
-                        font=('Segoe UI', 11, 'bold'),
-                        bg=self.colors['surface'],
-                        fg=self.colors['primary']).pack(side=tk.RIGHT)
+            # Show only non-zero hours to save space
+            for i, hour in enumerate(hours):
+                if i < len(vehicule_mari) and i < len(vehicule_mici):
+                    hour_total = vehicule_mari[i] + vehicule_mici[i]
+                    if hour_total > 0:
+                        stats_text += f"""
+    {hour} --> {vehicule_mari[i]} 🚛, {vehicule_mici[i]} 🚗 (total: {hour_total})"""
+        
+        # Display stats in scrollable text with smaller font
+        stats_label = tk.Label(self.text_stats_frame,
+                              text=stats_text,
+                              font=('Segoe UI', 9),
+                              bg=self.colors['surface'],
+                              fg=self.colors['dark'],
+                              justify=tk.LEFT,
+                              anchor='nw')
+        stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
     
-    def create_quick_stat_cards(self, total, total_mari, total_mici):
-        """Create quick stat cards for the sidebar"""
-        # Clear existing content
-        for widget in self.quick_stats_content.winfo_children():
-            widget.destroy()
-        
-        # Total vehicles card
-        total_card = tk.Frame(self.quick_stats_content, bg=self.colors['primary'], relief='solid', bd=1)
-        total_card.pack(fill=tk.X, pady=(0, 10))
-        
-        tk.Label(total_card, text="🚦 TOTAL",
-                font=('Segoe UI', 10, 'bold'),
-                bg=self.colors['primary'],
-                fg='white').pack(pady=(10, 0))
-        
-        tk.Label(total_card, text=f"{total:,}",
-                font=('Segoe UI', 20, 'bold'),
-                bg=self.colors['primary'],
-                fg='white').pack()
-        
-        tk.Label(total_card, text="vehicule",
-                font=('Segoe UI', 10),
-                bg=self.colors['primary'],
-                fg='white').pack(pady=(0, 10))
-        
-        # Large vehicles card
-        mari_card = tk.Frame(self.quick_stats_content, bg=self.colors['danger'], relief='solid', bd=1)
-        mari_card.pack(fill=tk.X, pady=(0, 10))
-        
-        tk.Label(mari_card, text="🚛 MARI",
-                font=('Segoe UI', 10, 'bold'),
-                bg=self.colors['danger'],
-                fg='white').pack(pady=(10, 0))
-        
-        tk.Label(mari_card, text=f"{total_mari:,}",
-                font=('Segoe UI', 18, 'bold'),
-                bg=self.colors['danger'],
-                fg='white').pack()
-        
-        percentage_mari = (total_mari/total*100) if total > 0 else 0
-        tk.Label(mari_card, text=f"{percentage_mari:.1f}%",
-                font=('Segoe UI', 10),
-                bg=self.colors['danger'],
-                fg='white').pack(pady=(0, 10))
-        
-        # Small vehicles card
-        mici_card = tk.Frame(self.quick_stats_content, bg=self.colors['success'], relief='solid', bd=1)
-        mici_card.pack(fill=tk.X)
-        
-        tk.Label(mici_card, text="🚗 MICI",
-                font=('Segoe UI', 10, 'bold'),
-                bg=self.colors['success'],
-                fg='white').pack(pady=(10, 0))
-        
-        tk.Label(mici_card, text=f"{total_mici:,}",
-                font=('Segoe UI', 18, 'bold'),
-                bg=self.colors['success'],
-                fg='white').pack()
-        
-        percentage_mici = (total_mici/total*100) if total > 0 else 0
-        tk.Label(mici_card, text=f"{percentage_mici:.1f}%",
-                font=('Segoe UI', 10),
-                bg=self.colors['success'],
-                fg='white').pack(pady=(0, 10))
+
     
-    def create_stat_box(self, parent, label, value, color, row=0, col=0):
-        """Create a modern stat box"""
-        stat_frame = tk.Frame(parent, bg=color, relief='solid', bd=1, width=180, height=80)
-        stat_frame.grid(row=row, column=col, padx=10, pady=5, sticky='ew')
-        stat_frame.pack_propagate(False)
-        
-        tk.Label(stat_frame, text=label,
-                font=('Segoe UI', 10, 'bold'),
-                bg=color,
-                fg='white',
-                wraplength=160).pack(pady=(10, 0))
-        
-        tk.Label(stat_frame, text=value,
-                font=('Segoe UI', 14, 'bold'),
-                bg=color,
-                fg='white').pack(pady=(5, 10))
-        
-        # Configure column weights
-        parent.columnconfigure(0, weight=1)
-        parent.columnconfigure(1, weight=1)
-    
-    def generate_modern_weekly_view(self, date):
+    def generate_modern_weekly_view(self, date, formatted_date):
         """Generate modern weekly view"""
         selected_date = datetime.datetime.strptime(date, "%Y-%m-%d")
         days_since_monday = selected_date.weekday()
@@ -841,12 +611,12 @@ class BinaryTrafficAnalyzerApp:
         # Modern line plots with gradients
         x_pos = range(len(day_labels))
         
-        line1 = ax.plot(x_pos, vehicule_mari, marker='o', label='🚛 Vehicule Mari',
+        line1 = ax.plot(x_pos, vehicule_mari, marker='o', label='Vehicule Mari',
                        color=self.colors['danger'], linewidth=4, markersize=10,
                        markeredgecolor='white', markeredgewidth=2,
                        markerfacecolor=self.colors['danger'])
         
-        line2 = ax.plot(x_pos, vehicule_mici, marker='s', label='🚗 Vehicule Mici',
+        line2 = ax.plot(x_pos, vehicule_mici, marker='s', label='Vehicule Mici',
                        color=self.colors['success'], linewidth=4, markersize=10,
                        markeredgecolor='white', markeredgewidth=2,
                        markerfacecolor=self.colors['success'])
@@ -880,26 +650,23 @@ class BinaryTrafficAnalyzerApp:
         
         fig.tight_layout(pad=2.0)
         
-        # Display chart
+        # Display chart with optimized sizing
         canvas = FigureCanvasTkAgg(fig, self.graph_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
         
-        # Generate weekly stats
-        self.generate_modern_weekly_stats(vehicule_mari, vehicule_mici, day_labels, week_start, week_end)
+        # Generate weekly stats with text format
+        self.generate_modern_weekly_stats_text(vehicule_mari, vehicule_mici, day_labels, week_start, week_end, formatted_date)
     
-    def generate_modern_weekly_stats(self, vehicule_mari, vehicule_mici, day_labels, week_start, week_end):
-        """Generate modern weekly statistics"""
+    def generate_modern_weekly_stats_text(self, vehicule_mari, vehicule_mici, day_labels, week_start, week_end, formatted_date):
+        """Generate compact text-based weekly statistics"""
+        # Clear existing stats
+        for widget in self.text_stats_frame.winfo_children():
+            widget.destroy()
+        
         total_mari_week = sum(vehicule_mari)
         total_mici_week = sum(vehicule_mici)
         total_week = total_mari_week + total_mici_week
-        
-        # Quick stats
-        self.create_quick_stat_cards(total_week, total_mari_week, total_mici_week)
-        
-        # Detailed stats
-        stats_container = tk.Frame(self.stats_frame, bg=self.colors['light'])
-        stats_container.pack(fill=tk.X, padx=10, pady=10)
         
         # Weekly analysis
         total_daily = [m + s for m, s in zip(vehicule_mari, vehicule_mici)]
@@ -909,89 +676,41 @@ class BinaryTrafficAnalyzerApp:
         # Weekday vs weekend analysis
         weekdays_total = sum(total_daily[0:5])
         weekend_total = sum(total_daily[5:7])
+        day_labels = [label.replace('\n', ' ') for label in day_labels]
+        stats_text = f"""📅 SĂPTĂMÂNA {week_start.strftime('%d/%m')}-{week_end.strftime('%d/%m')}
+
+📊 TOTALURI:
+    Total: {total_week:,} vehicule
+    Mari: {total_mari_week:,} ({(total_mari_week/total_week*100) if total_week > 0 else 0:.1f}%)
+    Mici: {total_mici_week:,} ({(total_mici_week/total_week*100) if total_week > 0 else 0:.1f}%)
+    Medie zilnică: {total_week/7:.0f}
+
+🏆 EXTREME:
+    Cel mai mult:  {day_labels[max_day_idx]} ({total_daily[max_day_idx]:,})
+    Cel mai puțin: {day_labels[min_day_idx]} ({total_daily[min_day_idx]:,})
+
+💼 LUCRĂTOARE vs WEEKEND:
+    Luni-Vineri: {weekdays_total:,} ({weekdays_total/5:.0f}/zi)
+    Sâmbătă-Duminică: {weekend_total:,} ({weekend_total/2:.0f}/zi)
+
+📈 ZILNIC:"""
         
-        # Create comprehensive weekly report
-        self.create_weekly_report_card(stats_container, {
-            'period': f"{week_start.strftime('%d/%m')} - {week_end.strftime('%d/%m/%Y')}",
-            'total_week': total_week,
-            'total_mari': total_mari_week,
-            'total_mici': total_mici_week,
-            'avg_daily': total_week / 7 if total_week > 0 else 0,
-            'best_day': day_labels[max_day_idx],
-            'best_day_count': total_daily[max_day_idx],
-            'worst_day': day_labels[min_day_idx],
-            'worst_day_count': total_daily[min_day_idx],
-            'weekdays_total': weekdays_total,
-            'weekend_total': weekend_total,
-            'weekdays_avg': weekdays_total / 5 if weekdays_total > 0 else 0,
-            'weekend_avg': weekend_total / 2 if weekend_total > 0 else 0
-        })
+        for i, day_label in enumerate(day_labels):
+            if i < len(total_daily) and total_daily[i] > 0:
+                stats_text += f"""
+    {day_label}: {total_daily[i]:,} (M:{vehicule_mari[i]}, m:{vehicule_mici[i]})"""
+        
+        # Display stats
+        stats_label = tk.Label(self.text_stats_frame,
+                              text=stats_text,
+                              font=('Segoe UI', 9),
+                              bg=self.colors['surface'],
+                              fg=self.colors['dark'],
+                              justify=tk.LEFT,
+                              anchor='nw')
+        stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
     
-    def create_weekly_report_card(self, parent, data):
-        """Create comprehensive weekly report card"""
-        report_card = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        report_card.pack(fill=tk.X, pady=10)
-        
-        # Header
-        header = tk.Frame(report_card, bg=self.colors['info'], height=50)
-        header.pack(fill=tk.X)
-        header.pack_propagate(False)
-        
-        tk.Label(header, text=f"📅 Raport Săptămânal - {data['period']}",
-                font=('Segoe UI', 14, 'bold'),
-                bg=self.colors['info'],
-                fg='white').pack(expand=True)
-        
-        # Content
-        content = tk.Frame(report_card, bg=self.colors['surface'])
-        content.pack(fill=tk.X, padx=20, pady=20)
-        
-        # Summary stats
-        summary_frame = tk.Frame(content, bg=self.colors['light'])
-        summary_frame.pack(fill=tk.X, pady=(0, 15))
-        
-        summary_stats = [
-            ("📊 Total Săptămânal", f"{data['total_week']:,} vehicule", self.colors['primary']),
-            ("📈 Medie Zilnică", f"{data['avg_daily']:.0f} vehicule", self.colors['info']),
-            ("🏆 Ziua cu Cel Mai Mult Trafic", f"{data['best_day']}: {data['best_day_count']:,}", self.colors['success']),
-            ("📉 Ziua cu Cel Mai Puțin Trafic", f"{data['worst_day']}: {data['worst_day_count']:,}", self.colors['warning'])
-        ]
-        
-        for i, (label, value, color) in enumerate(summary_stats):
-            self.create_stat_box(summary_frame, label, value, color, row=i//2, col=i%2)
-        
-        # Weekday vs Weekend comparison
-        if data['weekdays_total'] > 0 or data['weekend_total'] > 0:
-            comparison_frame = tk.Frame(content, bg=self.colors['surface'])
-            comparison_frame.pack(fill=tk.X, pady=15)
-            
-            tk.Label(comparison_frame, text="💼 Analiza: Zile Lucrătoare vs Weekend",
-                    font=('Segoe UI', 13, 'bold'),
-                    bg=self.colors['surface'],
-                    fg=self.colors['primary']).pack(anchor='w', pady=(0, 10))
-            
-            comparison_stats = [
-                ("💼 Total Luni-Vineri", f"{data['weekdays_total']:,} ({data['weekdays_avg']:.0f}/zi)"),
-                ("🏖️ Total Sâmbătă-Duminică", f"{data['weekend_total']:,} ({data['weekend_avg']:.0f}/zi)"),
-                ("📊 Diferența Medie", f"{abs(data['weekdays_avg'] - data['weekend_avg']):.0f} vehicule/zi"),
-                ("🎯 Tipul Preferat", "Zile lucrătoare" if data['weekdays_avg'] > data['weekend_avg'] else "Weekend")
-            ]
-            
-            for stat_label, stat_value in comparison_stats:
-                stat_row = tk.Frame(comparison_frame, bg=self.colors['surface'])
-                stat_row.pack(fill=tk.X, pady=3)
-                
-                tk.Label(stat_row, text=stat_label,
-                        font=('Segoe UI', 11),
-                        bg=self.colors['surface'],
-                        fg=self.colors['dark']).pack(side=tk.LEFT)
-                
-                tk.Label(stat_row, text=stat_value,
-                        font=('Segoe UI', 11, 'bold'),
-                        bg=self.colors['surface'],
-                        fg=self.colors['accent']).pack(side=tk.RIGHT)
-    
-    def generate_modern_monthly_trend(self, date):
+    def generate_modern_monthly_trend(self, date, formatted_date):
         """Generate modern monthly trend view"""
         data = self.db.get_monthly_trend(date[:7])
         
@@ -1010,7 +729,7 @@ class BinaryTrafficAnalyzerApp:
         
         # Create gradient stacked area
         ax.stackplot(hours, avg_mari, avg_mici,
-                    labels=['🚛 Vehicule Mari', '🚗 Vehicule Mici'],
+                    labels=['Vehicule Mari', 'Vehicule Mici'],
                     colors=[self.colors['danger'], self.colors['success']],
                     alpha=0.8)
         
@@ -1040,17 +759,68 @@ class BinaryTrafficAnalyzerApp:
         
         fig.tight_layout(pad=2.0)
         
-        # Display chart
+        # Display chart with optimized sizing
         canvas = FigureCanvasTkAgg(fig, self.graph_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
         
-        # Generate monthly stats
-        total_mari = sum(avg_mari)
-        total_mici = sum(avg_mici)
-        self.create_quick_stat_cards(total_mari + total_mici, total_mari, total_mici)
+        self.generate_monthly_stats_text(avg_mari, avg_mici, hours, formatted_date)
+        
+    def generate_monthly_stats_text(self, avg_mari, avg_mici, hours, date):
+        """Generate compact text-based monthly statistics"""
+                
+        # Clear existing stats
+        for widget in self.text_stats_frame.winfo_children():
+            widget.destroy()
+        
+        # Calculate totals and averages properly
+        total_mari = sum(avg_mari) if avg_mari else 0
+        total_mici = sum(avg_mici) if avg_mici else 0
+        total = total_mari + total_mici
+        
+        # Calculate average per hour across the month
+        avg_mari_per_hour = total_mari / len(avg_mari) if avg_mari else 0
+        avg_mici_per_hour = total_mici / len(avg_mici) if avg_mici else 0
+        
+        # Find peak hours
+        peak_mari_idx = avg_mari.index(max(avg_mari)) if avg_mari and max(avg_mari) > 0 else 0
+        peak_mici_idx = avg_mici.index(max(avg_mici)) if avg_mici and max(avg_mici) > 0 else 0
+        
+        date_to_print = date[-7:] if len(date) >= 7 else date
+        
+        stats_text = f"""
+LUNA {date_to_print}
+
+📊 MEDII LUNARE:
+    Total: {(avg_mici_per_hour + avg_mari_per_hour):.1f}/oră
+    Mari: {avg_mari_per_hour:.1f}/oră ({(total_mari/total*100) if total > 0 else 0:.1f}%)
+    Mici: {avg_mici_per_hour:.1f}/oră ({(total_mici/total*100) if total > 0 else 0:.1f}%)
+
+⏰ ORE DE VÂRF:
+    🚛 Mari: {hours[peak_mari_idx] if hours and peak_mari_idx < len(hours) else 0}:00 ({avg_mari[peak_mari_idx] if avg_mari and peak_mari_idx < len(avg_mari) else 0:.1f})
+    🚗 Mici: {hours[peak_mici_idx] if hours and peak_mici_idx < len(hours) else 0}:00 ({avg_mici[peak_mici_idx] if avg_mici and peak_mici_idx < len(avg_mici) else 0:.1f})
+
+📈 DISTRIBUȚIA ORARĂ:"""
+
+                    
+        # Show only significant hours
+        for i, hour in enumerate(hours):
+            if i < len(avg_mari) and i < len(avg_mici):
+                hour_total = avg_mari[i] + avg_mici[i]
+                stats_text += f"""
+    {hour} --> {avg_mari[i]:.1f} 🚛, {avg_mici[i]:.1f} 🚗 (total: {hour_total:.1f})"""
+        
+        # Display stats
+        stats_label = tk.Label(self.text_stats_frame,
+                            text=stats_text,
+                            font=('Segoe UI', 9),
+                            bg=self.colors['surface'],
+                            fg=self.colors['dark'],
+                            justify=tk.LEFT,
+                            anchor='nw')
+        stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
     
-    def generate_modern_percentage_distribution(self, date):
+    def generate_modern_percentage_distribution(self, date, formatted_date):
         """Generate modern percentage distribution"""
         data = self.db.get_daily_totals(date)
         
@@ -1066,13 +836,13 @@ class BinaryTrafficAnalyzerApp:
             return
         
         # Create modern donut chart
-        fig = self.create_modern_figure(width=10, height=8)
+        fig = self.create_modern_figure()
         ax = fig.add_subplot(111)
         ax.set_facecolor(self.colors['light'])
         
         # Data for pie chart
         sizes = [total_mari, total_mici]
-        labels = ['🚛 Vehicule Mari', '🚗 Vehicule Mici']
+        labels = ['Vehicule Mari', 'Vehicule Mici']
         colors = [self.colors['danger'], self.colors['success']]
         explode = (0.05, 0)
         
@@ -1098,65 +868,62 @@ class BinaryTrafficAnalyzerApp:
             autotext.set_fontsize(11)
         
         ax.axis('equal')
-        ax.set_title(f'Distribuția vehiculelor\n{date}',
+        ax.set_title(f'Distribuția vehiculelor\n{formatted_date}',
                     fontsize=16, fontweight='bold', color=self.colors['primary'], pad=20)
         
         fig.tight_layout(pad=2.0)
         
-        # Display chart
+        # Display chart with optimized sizing
         canvas = FigureCanvasTkAgg(fig, self.graph_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
         
-        # Generate distribution stats
-        self.create_quick_stat_cards(total, total_mari, total_mici)
-        
-        # Detailed distribution analysis
-        self.create_distribution_analysis(total, total_mari, total_mici, date)
+        # Generate distribution stats with text format
+        self.generate_distribution_stats_text(total, total_mari, total_mici, formatted_date)
     
-    def create_distribution_analysis(self, total, total_mari, total_mici, date):
-        """Create detailed distribution analysis"""
-        analysis_card = tk.Frame(self.stats_frame, bg=self.colors['surface'], relief='solid', bd=1)
-        analysis_card.pack(fill=tk.X, padx=10, pady=10)
+    def generate_distribution_stats_text(self, total, total_mari, total_mici, date):
+        """Generate compact text-based distribution statistics"""
+        # Clear existing stats
+        for widget in self.text_stats_frame.winfo_children():
+            widget.destroy()
         
-        # Header
-        header = tk.Frame(analysis_card, bg=self.colors['accent'], height=50)
-        header.pack(fill=tk.X)
-        header.pack_propagate(False)
-        
-        tk.Label(header, text=f"🥧 Analiza Distribuției - {date}",
-                font=('Segoe UI', 14, 'bold'),
-                bg=self.colors['accent'],
-                fg='white').pack(expand=True)
-        
-        # Content
-        content = tk.Frame(analysis_card, bg=self.colors['surface'])
-        content.pack(fill=tk.X, padx=20, pady=20)
-        
-        # Calculate percentages and insights
         percent_mari = (total_mari / total) * 100
         percent_mici = (total_mici / total) * 100
         
-        # Distribution insights
-        insights = []
+        # Generate insights
         if percent_mari > 60:
-            insights.append("🚛 Dominanță vehicule mari")
+            dominant = "🚛 Dominanță vehicule mari"
+            traffic_type = "Transport comercial"
         elif percent_mici > 60:
-            insights.append("🚗 Dominanță vehicule mici")
+            dominant = "🚗 Dominanță vehicule mici"
+            traffic_type = "Trafic personal"
         else:
-            insights.append("⚖️ Distribuție echilibrată")
+            dominant = "⚖️ Distribuție echilibrată"
+            traffic_type = "Trafic mixt"
+
+        stats_text = f"""🥧 DISTRIBUȚIE {date}
+
+📊 VEHICULE:
+    Total: {total:,}
+    Mari: {total_mari:,} ({percent_mari:.1f}%)
+    Mici: {total_mici:,} ({percent_mici:.1f}%)
+
+💡 ANALIZĂ:
+    {dominant}
+    Tipul de trafic: {traffic_type}
+"""
         
-        if abs(percent_mari - percent_mici) < 10:
-            insights.append("📊 Distribuție foarte echilibrată")
-        
-        # Display insights
-        for insight in insights:
-            tk.Label(content, text=insight,
-                    font=('Segoe UI', 12, 'bold'),
-                    bg=self.colors['surface'],
-                    fg=self.colors['success']).pack(anchor='w', pady=5)
+        # Display stats
+        stats_label = tk.Label(self.text_stats_frame,
+                              text=stats_text,
+                              font=('Segoe UI', 9),
+                              bg=self.colors['surface'],
+                              fg=self.colors['dark'],
+                              justify=tk.LEFT,
+                              anchor='nw')
+        stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
     
-    def generate_modern_peak_hours_comparison(self, date):
+    def generate_modern_peak_hours_comparison(self, date, formatted_date):
         """Generate modern peak hours comparison"""
         peak_data = self.db.get_peak_hours_data(date)
         
@@ -1173,7 +940,6 @@ class BinaryTrafficAnalyzerApp:
         
         # Create modern comparison chart
         fig = self.create_modern_figure()
-        
         ax = fig.add_subplot(111)
         ax.set_facecolor(self.colors['light'])
         
@@ -1185,10 +951,10 @@ class BinaryTrafficAnalyzerApp:
         width = 0.35
         
         # Create bars with modern styling
-        bars1 = ax.bar(x - width/2, mari_data, width, label='🚛 Vehicule Mari',
+        bars1 = ax.bar(x - width/2, mari_data, width, label='Vehicule Mari',
                       color=self.colors['danger'], alpha=0.9,
                       edgecolor='white', linewidth=2)
-        bars2 = ax.bar(x + width/2, mici_data, width, label='🚗 Vehicule Mici',
+        bars2 = ax.bar(x + width/2, mici_data, width, label='Vehicule Mici',
                       color=self.colors['success'], alpha=0.9,
                       edgecolor='white', linewidth=2)
         
@@ -1206,7 +972,7 @@ class BinaryTrafficAnalyzerApp:
         # Modern styling
         ax.set_xlabel('Perioada zilei', fontsize=12, fontweight='bold', color=self.colors['dark'])
         ax.set_ylabel('Numărul de vehicule', fontsize=12, fontweight='bold', color=self.colors['dark'])
-        ax.set_title(f'Comparația orelor de vârf cu orele normale\n{date}',
+        ax.set_title(f'Comparația orelor de vârf cu orele normale\n{formatted_date}',
                     fontsize=16, fontweight='bold', color=self.colors['primary'], pad=20)
         
         ax.set_xticks(x)
@@ -1228,91 +994,50 @@ class BinaryTrafficAnalyzerApp:
         
         fig.tight_layout(pad=2.0)
         
-        # Display chart
+        # Display chart with optimized sizing
         canvas = FigureCanvasTkAgg(fig, self.graph_frame)
         canvas.draw()
-        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True, padx=2, pady=2)
         
-        # Generate peak hours analysis
+        # Generate peak hours analysis with text format
         total_peak = peak_mari + peak_mici
         total_normal = normal_mari + normal_mici
-        self.create_quick_stat_cards(total_peak + total_normal, peak_mari + normal_mari, peak_mici + normal_mici)
-        
-        # Detailed peak analysis
-        self.create_peak_analysis(total_peak, total_normal, peak_mari, peak_mici, normal_mari, normal_mici, date)
+        self.generate_peak_analysis_text(total_peak, total_normal, peak_mari, peak_mici, normal_mari, normal_mici, formatted_date)
     
-    def create_peak_analysis(self, total_peak, total_normal, peak_mari, peak_mici, normal_mari, normal_mici, date):
-        """Create detailed peak hours analysis"""
-        analysis_card = tk.Frame(self.stats_frame, bg=self.colors['surface'], relief='solid', bd=1)
-        analysis_card.pack(fill=tk.X, padx=10, pady=10)
-        
-        # Header
-        header = tk.Frame(analysis_card, bg=self.colors['warning'], height=50)
-        header.pack(fill=tk.X)
-        header.pack_propagate(False)
-        
-        tk.Label(header, text=f"🔥 Analiza Orelor de Vârf - {date}",
-                font=('Segoe UI', 14, 'bold'),
-                bg=self.colors['warning'],
-                fg='white').pack(expand=True)
-        
-        # Content
-        content = tk.Frame(analysis_card, bg=self.colors['surface'])
-        content.pack(fill=tk.X, padx=20, pady=20)
+    def generate_peak_analysis_text(self, total_peak, total_normal, peak_mari, peak_mici, normal_mari, normal_mici, date):
+        """Generate compact text-based peak hours analysis"""
+        # Clear existing stats
+        for widget in self.text_stats_frame.winfo_children():
+            widget.destroy()
         
         # Calculate statistics
         factor = total_peak / total_normal if total_normal > 0 else 0
-        peak_percentage = (total_peak / (total_peak + total_normal)) * 100 if (total_peak + total_normal) > 0 else 0
         
-        # Peak vs Normal comparison
-        comparison_stats = [
-            ("📈 Total Ore de Vârf", f"{total_peak:,} vehicule"),
-            ("📊 Total Ore Normale", f"{total_normal:,} vehicule"),
-            ("⚡ Factor de Intensificare", f"{factor:.1f}x mai intens"),
-            ("🎯 Concentrația Traficului", f"{peak_percentage:.1f}% în ore de vârf"),
-            ("🚛 Vehicule Mari în Vârf", f"{peak_mari:,} ({(peak_mari/total_peak*100) if total_peak > 0 else 0:.1f}%)"),
-            ("🚗 Vehicule Mici în Vârf", f"{peak_mici:,} ({(peak_mici/total_peak*100) if total_peak > 0 else 0:.1f}%)")
-        ]
+        stats_text = f"""🔥 ORE DE VÂRF {date}
+
+📊 COMPARAȚIE:
+    Ore de vârf: {total_peak:,}
+    Ore normale: {total_normal:,}
+    Factor: {factor:.1f}x mai intens la ore de vârf
+
+🚛 VEHICULE MARI:
+    Ore de vârf: {peak_mari:,} ({(peak_mari/total_peak*100) if total_peak > 0 else 0:.1f}%)
+    Normal: {normal_mari:,} ({(normal_mari/total_normal*100) if total_normal > 0 else 0:.1f}%)
+
+🚗 VEHICULE MICI:
+    Ore de vârf: {peak_mici:,} ({(peak_mici/total_peak*100) if total_peak > 0 else 0:.1f}%)
+    Normal: {normal_mici:,} ({(normal_mici/total_normal*100) if total_normal > 0 else 0:.1f}%)
+"""
         
-        for stat_label, stat_value in comparison_stats:
-            stat_row = tk.Frame(content, bg=self.colors['surface'])
-            stat_row.pack(fill=tk.X, pady=5)
-            
-            tk.Label(stat_row, text=stat_label,
-                    font=('Segoe UI', 11),
-                    bg=self.colors['surface'],
-                    fg=self.colors['dark']).pack(side=tk.LEFT)
-            
-            tk.Label(stat_row, text=stat_value,
-                    font=('Segoe UI', 11, 'bold'),
-                    bg=self.colors['surface'],
-                    fg=self.colors['primary']).pack(side=tk.RIGHT)
-        
-        # Add insights
-        insights_frame = tk.Frame(content, bg=self.colors['light'])
-        insights_frame.pack(fill=tk.X, pady=(15, 0))
-        
-        tk.Label(insights_frame, text="💡 Insights:",
-                font=('Segoe UI', 12, 'bold'),
-                bg=self.colors['light'],
-                fg=self.colors['primary']).pack(anchor='w', pady=(10, 5))
-        
-        insights = []
-        if factor > 2:
-            insights.append("🚨 Trafic foarte intens în orele de vârf")
-        elif factor > 1.5:
-            insights.append("⚠️ Trafic moderat intensificat în orele de vârf")
-        else:
-            insights.append("✅ Trafic relativ constant pe parcursul zilei")
-            
-        if peak_percentage > 40:
-            insights.append("📊 Mare parte din trafic se concentrează în orele de vârf")
-        
-        for insight in insights:
-            tk.Label(insights_frame, text=insight,
-                    font=('Segoe UI', 10),
-                    bg=self.colors['light'],
-                    fg=self.colors['dark']).pack(anchor='w', pady=2, padx=10)
+        # Display stats
+        stats_label = tk.Label(self.text_stats_frame,
+                              text=stats_text,
+                              font=('Segoe UI', 9),
+                              bg=self.colors['surface'],
+                              fg=self.colors['dark'],
+                              justify=tk.LEFT,
+                              anchor='nw')
+        stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
     
     def show_no_data_message(self, custom_message=None):
         """Show modern no data message"""
@@ -1339,25 +1064,7 @@ class BinaryTrafficAnalyzerApp:
                                fg=self.colors['muted'],
                                justify=tk.CENTER)
         message_label.pack(expand=True, pady=(0, 10))
-        
-        suggestion_label = tk.Label(no_data_frame, text="💡 Sugestie: Generează date de test pentru a începe analiza",
-                                  font=('Segoe UI', 11),
-                                  bg=self.colors['surface'],
-                                  fg=self.colors['secondary'],
-                                  justify=tk.CENTER)
-        suggestion_label.pack(expand=True, pady=(0, 20))
-        
-        # Clear quick stats
-        for widget in self.quick_stats_content.winfo_children():
-            widget.destroy()
-            
-        no_stats_label = tk.Label(self.quick_stats_content,
-                                text="Selectează o dată cu date\npentru a vedea statisticile",
-                                font=('Segoe UI', 11),
-                                bg=self.colors['surface'],
-                                fg=self.colors['muted'],
-                                justify=tk.CENTER)
-        no_stats_label.pack(expand=True)
+
     
     def __del__(self):
         """Clean up database connection"""
