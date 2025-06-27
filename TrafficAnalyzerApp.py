@@ -48,11 +48,71 @@ class BinaryTrafficAnalyzerApp:
         self.db = TrafficDatabase('traffic_binary.db')
         self.dates_with_data = self.db.get_dates_with_data()
         
+        # Initialize filter data
+        self.cities_data = {}
+        self.locations_data = {}
+        self.cameras_data = {}
+        self.load_filter_data()
+        
         # Setup modern styling
         self.setup_styles()
         
         # Create GUI
         self.create_modern_gui()
+        
+    def load_filter_data(self):
+        """Load cities, locations and cameras data for filters"""
+        try:
+            # Get all cities
+            self.db.cursor.execute("SELECT id, city_name FROM city ORDER BY city_name")
+            cities = self.db.cursor.fetchall()
+            self.cities_data = {city[1]: city[0] for city in cities}
+            
+            # Get all locations grouped by city
+            self.db.cursor.execute("""
+                SELECT l.id, l.road_name, l.road_km, l.city_id, c.city_name 
+                FROM location l 
+                JOIN city c ON l.city_id = c.id 
+                ORDER BY c.city_name, l.road_name
+            """)
+            locations = self.db.cursor.fetchall()
+            
+            self.locations_data = {}
+            for loc in locations:
+                loc_id, road_name, road_km, city_id, city_name = loc
+                location_display = f"{road_name} (km {road_km})" if road_km else road_name
+                
+                if city_name not in self.locations_data:
+                    self.locations_data[city_name] = {}
+                self.locations_data[city_name][location_display] = loc_id
+            
+            # Get all cameras grouped by location and city
+            self.db.cursor.execute("""
+                SELECT cam.id, cam.model, l.road_name, l.road_km, c.city_name 
+                FROM camera cam
+                JOIN location l ON cam.location_id = l.id
+                JOIN city c ON l.city_id = c.id 
+                ORDER BY c.city_name, l.road_name, cam.model
+            """)
+            cameras = self.db.cursor.fetchall()
+            
+            self.cameras_data = {}
+            for cam in cameras:
+                cam_id, model, road_name, road_km, city_name = cam
+                location_display = f"{road_name} (km {road_km})" if road_km else road_name
+                camera_display = f"{model}"
+                
+                if city_name not in self.cameras_data:
+                    self.cameras_data[city_name] = {}
+                if location_display not in self.cameras_data[city_name]:
+                    self.cameras_data[city_name][location_display] = {}
+                self.cameras_data[city_name][location_display][camera_display] = cam_id
+                
+        except Exception as e:
+            print(f"Error loading filter data: {e}")
+            self.cities_data = {}
+            self.locations_data = {}
+            self.cameras_data = {}
         
     def setup_styles(self):
         """Configure modern ttk styles"""
@@ -149,9 +209,352 @@ class BinaryTrafficAnalyzerApp:
         # Calendar card
         self.create_calendar_card(parent)
         
+        # Filters card
+        self.create_filters_card(parent)
+        
         # Controls card
         self.create_controls_card(parent)
         
+    def create_filters_card(self, parent):
+        """Create filters card for city, location, camera selection"""
+        card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
+        card_frame.pack(fill=tk.X, pady=(0, 15))
+        
+        # Card header
+        header_frame = tk.Frame(card_frame, bg=self.colors['accent'], height=35)
+        header_frame.pack(fill=tk.X)
+        header_frame.pack_propagate(False)
+        
+        header_label = tk.Label(header_frame, text="🔍 Filtre",
+                               font=('Segoe UI', 12, 'bold'),
+                               bg=self.colors['accent'],
+                               fg='white')
+        header_label.pack(expand=True)
+        
+        # Filters content
+        filters_content = tk.Frame(card_frame, bg=self.colors['surface'])
+        filters_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        
+        # City filter
+        city_label = tk.Label(filters_content, text="Oraș:",
+                             font=('Segoe UI', 10, 'bold'),
+                             bg=self.colors['surface'],
+                             fg=self.colors['dark'])
+        city_label.pack(anchor='w', pady=(0, 5))
+        
+        city_values = ["Toate orașele"] + list(self.cities_data.keys())
+        self.city_filter = ttk.Combobox(filters_content, 
+                                       values=city_values,
+                                       state="readonly",
+                                       font=('Segoe UI', 9),
+                                       style='Modern.TCombobox')
+        self.city_filter.set("Toate orașele")
+        self.city_filter.pack(fill=tk.X, pady=(0, 10))
+        self.city_filter.bind("<<ComboboxSelected>>", self.on_city_change)
+        
+        # Location filter
+        location_label = tk.Label(filters_content, text="Locație:",
+                                 font=('Segoe UI', 10, 'bold'),
+                                 bg=self.colors['surface'],
+                                 fg=self.colors['dark'])
+        location_label.pack(anchor='w', pady=(0, 5))
+        
+        self.location_filter = ttk.Combobox(filters_content, 
+                                           values=["Toate locațiile"],
+                                           state="readonly",
+                                           font=('Segoe UI', 9),
+                                           style='Modern.TCombobox')
+        self.location_filter.set("Toate locațiile")
+        self.location_filter.pack(fill=tk.X, pady=(0, 10))
+        self.location_filter.bind("<<ComboboxSelected>>", self.on_location_change)
+        
+        # Camera filter
+        camera_label = tk.Label(filters_content, text="Cameră:",
+                               font=('Segoe UI', 10, 'bold'),
+                               bg=self.colors['surface'],
+                               fg=self.colors['dark'])
+        camera_label.pack(anchor='w', pady=(0, 5))
+        
+        self.camera_filter = ttk.Combobox(filters_content, 
+                                         values=["Toate camerele"],
+                                         state="readonly",
+                                         font=('Segoe UI', 9),
+                                         style='Modern.TCombobox')
+        self.camera_filter.set("Toate camerele")
+        self.camera_filter.pack(fill=tk.X, pady=(0, 10))
+        self.camera_filter.bind("<<ComboboxSelected>>", self.on_filter_change)
+        
+        # Reset filters button
+        reset_btn = tk.Button(filters_content, text="🔄 Reset Filtre",
+                             font=('Segoe UI', 9, 'bold'),
+                             bg=self.colors['secondary'],
+                             fg='white',
+                             relief='flat',
+                             padx=10, pady=6,
+                             cursor='hand2',
+                             command=self.reset_filters)
+        reset_btn.pack(fill=tk.X)
+        
+        # Hover effects for reset button
+        def on_enter(e):
+            reset_btn.configure(bg='#475569')
+        def on_leave(e):
+            reset_btn.configure(bg=self.colors['secondary'])
+            
+        reset_btn.bind("<Enter>", on_enter)
+        reset_btn.bind("<Leave>", on_leave)
+        
+    def on_city_change(self, event=None):
+        """Handle city filter change"""
+        selected_city = self.city_filter.get()
+        
+        if selected_city == "Toate orașele":
+            # Reset location and camera filters
+            self.location_filter['values'] = ["Toate locațiile"]
+            self.location_filter.set("Toate locațiile")
+            self.camera_filter['values'] = ["Toate camerele"]
+            self.camera_filter.set("Toate camerele")
+        else:
+            # Update location filter based on selected city
+            if selected_city in self.locations_data:
+                location_values = ["Toate locațiile"] + list(self.locations_data[selected_city].keys())
+                self.location_filter['values'] = location_values
+                self.location_filter.set("Toate locațiile")
+            else:
+                self.location_filter['values'] = ["Toate locațiile"]
+                self.location_filter.set("Toate locațiile")
+            
+            # Reset camera filter
+            self.camera_filter['values'] = ["Toate camerele"]
+            self.camera_filter.set("Toate camerele")
+        
+        self.on_filter_change()
+    
+    def on_location_change(self, event=None):
+        """Handle location filter change"""
+        selected_city = self.city_filter.get()
+        selected_location = self.location_filter.get()
+        
+        if selected_city == "Toate orașele" or selected_location == "Toate locațiile":
+            # Reset camera filter
+            self.camera_filter['values'] = ["Toate camerele"]
+            self.camera_filter.set("Toate camerele")
+        else:
+            # Update camera filter based on selected city and location
+            if (selected_city in self.cameras_data and 
+                selected_location in self.cameras_data[selected_city]):
+                camera_values = ["Toate camerele"] + list(self.cameras_data[selected_city][selected_location].keys())
+                self.camera_filter['values'] = camera_values
+                self.camera_filter.set("Toate camerele")
+            else:
+                self.camera_filter['values'] = ["Toate camerele"]
+                self.camera_filter.set("Toate camerele")
+        
+        self.on_filter_change()
+    
+    def on_filter_change(self, event=None):
+        """Handle any filter change and refresh visualization"""
+        self.generate_visualization()
+    
+    def reset_filters(self):
+        """Reset all filters to default values"""
+        self.city_filter.set("Toate orașele")
+        self.location_filter['values'] = ["Toate locațiile"]
+        self.location_filter.set("Toate locațiile")
+        self.camera_filter['values'] = ["Toate camerele"]
+        self.camera_filter.set("Toate camerele")
+        self.generate_visualization()
+    
+    def get_filter_conditions(self):
+        """Get SQL conditions based on current filter selections"""
+        conditions = []
+        params = []
+        
+        selected_city = self.city_filter.get()
+        selected_location = self.location_filter.get()
+        selected_camera = self.camera_filter.get()
+        
+        if selected_city != "Toate orașele":
+            if selected_city in self.cities_data:
+                city_id = self.cities_data[selected_city]
+                conditions.append("city.id = ?")
+                params.append(city_id)
+        
+        if selected_location != "Toate locațiile" and selected_city != "Toate orașele":
+            if (selected_city in self.locations_data and 
+                selected_location in self.locations_data[selected_city]):
+                location_id = self.locations_data[selected_city][selected_location]
+                conditions.append("l.id = ?")
+                params.append(location_id)
+        
+        if (selected_camera != "Toate camerele" and 
+            selected_city != "Toate orașele" and 
+            selected_location != "Toate locațiile"):
+            if (selected_city in self.cameras_data and 
+                selected_location in self.cameras_data[selected_city] and
+                selected_camera in self.cameras_data[selected_city][selected_location]):
+                camera_id = self.cameras_data[selected_city][selected_location][selected_camera]
+                conditions.append("c.id = ?")
+                params.append(camera_id)
+        
+        return conditions, params
+    
+    def get_filtered_hourly_data(self, date):
+        """Get hourly data with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT strftime('%H', r.timestamp) as hour,
+                       SUM(r.nr_of_large_vehicles) as large_vehicles,
+                       SUM(r.nr_of_small_vehicles) as small_vehicles
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE date(r.timestamp) = ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            base_query += '''
+                GROUP BY strftime('%H', r.timestamp)
+                ORDER BY hour
+            '''
+            
+            params.insert(0, date)  # Add date as first parameter
+            
+            self.db.cursor.execute(base_query, params)
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            print(f"Error getting filtered hourly data: {e}")
+            return []
+    
+    def get_filtered_daily_totals(self, date):
+        """Get daily totals with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT SUM(r.nr_of_large_vehicles) as total_large,
+                       SUM(r.nr_of_small_vehicles) as total_small
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE date(r.timestamp) = ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            params.insert(0, date)  # Add date as first parameter
+            
+            self.db.cursor.execute(base_query, params)
+            result = self.db.cursor.fetchone()
+            return (result[0] or 0, result[1] or 0)
+        except Exception as e:
+            print(f"Error getting filtered daily totals: {e}")
+            return (0, 0)
+    
+    def get_filtered_week_data_by_range(self, start_date, end_date):
+        """Get week data with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT date(r.timestamp) as day,
+                       SUM(r.nr_of_large_vehicles) as large_vehicles,
+                       SUM(r.nr_of_small_vehicles) as small_vehicles
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE date(r.timestamp) BETWEEN ? AND ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            base_query += '''
+                GROUP BY date(r.timestamp)
+                ORDER BY day
+            '''
+            
+            params.insert(0, start_date)  # Add start_date as first parameter
+            params.insert(1, end_date)    # Add end_date as second parameter
+            
+            self.db.cursor.execute(base_query, params)
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            print(f"Error getting filtered week data: {e}")
+            return []
+    
+    def get_filtered_monthly_trend(self, month):
+        """Get monthly trend with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT strftime('%H', r.timestamp) as hour,
+                       AVG(r.nr_of_large_vehicles) as avg_large,
+                       AVG(r.nr_of_small_vehicles) as avg_small
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE strftime('%Y-%m', r.timestamp) = ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            base_query += '''
+                GROUP BY strftime('%H', r.timestamp)
+                ORDER BY hour
+            '''
+            
+            params.insert(0, month)  # Add month as first parameter
+            
+            self.db.cursor.execute(base_query, params)
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            print(f"Error getting filtered monthly trend: {e}")
+            return []
+    
+    def get_filtered_peak_hours_data(self, date):
+        """Get peak hours data with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT strftime('%H', r.timestamp) as hour,
+                       SUM(r.nr_of_large_vehicles) as large_vehicles,
+                       SUM(r.nr_of_small_vehicles) as small_vehicles
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE date(r.timestamp) = ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            base_query += '''
+                GROUP BY strftime('%H', r.timestamp)
+                ORDER BY hour
+            '''
+            
+            params.insert(0, date)  # Add date as first parameter
+            
+            self.db.cursor.execute(base_query, params)
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            print(f"Error getting filtered peak hours data: {e}")
+            return []
+    
     def create_calendar_card(self, parent):
         """Create compact calendar card"""
         card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
@@ -397,6 +800,28 @@ class BinaryTrafficAnalyzerApp:
         except Exception:
             return date_str
         
+    def get_filter_description(self):
+        """Get description of current filters for display in titles"""
+        parts = []
+        
+        selected_city = self.city_filter.get()
+        selected_location = self.location_filter.get()
+        selected_camera = self.camera_filter.get()
+        
+        if selected_city != "Toate orașele":
+            parts.append(f"Oraș: {selected_city}")
+            
+        if selected_location != "Toate locațiile":
+            parts.append(f"Locație: {selected_location}")
+            
+        if selected_camera != "Toate camerele":
+            parts.append(f"Cameră: {selected_camera}")
+        
+        if parts:
+            return " | " + " | ".join(parts)
+        else:
+            return " | Toate datele"
+        
     def generate_visualization(self, event=None):
         """Generate selected visualization with modern styling"""
         # Clear existing content
@@ -408,7 +833,8 @@ class BinaryTrafficAnalyzerApp:
         view_type = self.view_type.get()
         date = self.selected_date
         formatted_date = self.format_date(date)
-        self.viz_title.configure(text=f"{view_type}")
+        filter_desc = self.get_filter_description()
+        self.viz_title.configure(text=f"{view_type}{filter_desc}")
         
         if "Trafic orar" in view_type:
             self.generate_modern_hourly_view(date, formatted_date)
@@ -436,7 +862,7 @@ class BinaryTrafficAnalyzerApp:
         
     def generate_modern_hourly_view(self, date, formatted_date):
         """Generate modern hourly view"""
-        data = self.db.get_hourly_data(date)
+        data = self.get_filtered_hourly_data(date)
         
         if not data:
             self.show_no_data_message()
@@ -567,8 +993,6 @@ class BinaryTrafficAnalyzerApp:
                               anchor='nw')
         stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
     
-
-    
     def generate_modern_weekly_view(self, date, formatted_date):
         """Generate modern weekly view"""
         selected_date = datetime.datetime.strptime(date, "%Y-%m-%d")
@@ -576,7 +1000,7 @@ class BinaryTrafficAnalyzerApp:
         week_start = selected_date - datetime.timedelta(days=days_since_monday)
         week_end = week_start + datetime.timedelta(days=6)
         
-        data = self.db.get_week_data_by_range(week_start.strftime("%Y-%m-%d"), week_end.strftime("%Y-%m-%d"))
+        data = self.get_filtered_week_data_by_range(week_start.strftime("%Y-%m-%d"), week_end.strftime("%Y-%m-%d"))
         
         if not data:
             self.show_no_data_message(f"Nu există date pentru săptămâna {week_start.strftime('%d/%m')} - {week_end.strftime('%d/%m/%Y')}")
@@ -712,7 +1136,7 @@ class BinaryTrafficAnalyzerApp:
     
     def generate_modern_monthly_trend(self, date, formatted_date):
         """Generate modern monthly trend view"""
-        data = self.db.get_monthly_trend(date[:7])
+        data = self.get_filtered_monthly_trend(date[:7])
         
         if not data:
             self.show_no_data_message("Nu există date pentru luna selectată!")
@@ -822,7 +1246,7 @@ LUNA {date_to_print}
     
     def generate_modern_percentage_distribution(self, date, formatted_date):
         """Generate modern percentage distribution"""
-        data = self.db.get_daily_totals(date)
+        data = self.get_filtered_daily_totals(date)
         
         if not data:
             self.show_no_data_message()
@@ -925,7 +1349,7 @@ LUNA {date_to_print}
     
     def generate_modern_peak_hours_comparison(self, date, formatted_date):
         """Generate modern peak hours comparison"""
-        peak_data = self.db.get_peak_hours_data(date)
+        peak_data = self.get_filtered_peak_hours_data(date)
         
         if not peak_data:
             self.show_no_data_message("Nu există date pentru analiza orelor de vârf!")
