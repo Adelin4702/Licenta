@@ -99,12 +99,16 @@ class DistributionVisualization(BaseVisualization):
             self.colors['primary']
         )
 
+        self.stats_panel.add_divider()
+        
         insights = self._generate_traffic_insights(percent_mari, percent_mici, total)
         self.stats_panel.add_stats_section(
             "💡 ANALIZĂ TRAFIC",
             insights,
             self.colors['info']
         )
+        
+        self.stats_panel.add_divider()
 
         recommendations = self._generate_recommendations(percent_mari, percent_mici, total)
         self.stats_panel.add_stats_section(

@@ -33,23 +33,23 @@ class ControlsPanelComponent:
     
     def _create_card_header(self):
         """Create compact card header"""
-        header_frame = tk.Frame(self.card_frame, bg=self.colors['info'], height=CARD_HEADER_HEIGHT)
+        header_frame = tk.Frame(self.card_frame, bg=self.colors['info'], height=28)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         header_label = tk.Label(
             header_frame, 
             text="⚙️ Opțiuni",
-            font=('Segoe UI', FONT_SIZES['card_header'], 'bold'),
+            font=('Segoe UI', FONT_SIZES['normal'], 'bold'),
             bg=self.colors['info'],
             fg='white'
         )
         header_label.pack(expand=True)
     
     def _create_controls_content(self):
-        """Create controls content area"""
+        """Create compact controls content area"""
         controls_content = tk.Frame(self.card_frame, bg=self.colors['surface'])
-        controls_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        controls_content.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
         # View type selector
         self._create_view_selector(controls_content)
@@ -58,33 +58,33 @@ class ControlsPanelComponent:
         self._create_action_buttons(controls_content)
     
     def _create_view_selector(self, parent):
-        """Create visualization type selector"""
+        """Create compact visualization type selector"""
         # Label
         view_label = tk.Label(
             parent, 
             text="Tip vizualizare:",
-            font=('Segoe UI', FONT_SIZES['normal'], 'bold'),
+            font=('Segoe UI', FONT_SIZES['small'], 'bold'),
             bg=self.colors['surface'],
             fg=self.colors['dark']
         )
-        view_label.pack(anchor='w', pady=(0, 5))
+        view_label.pack(anchor='w', pady=(0, 2))
         
         # Combobox
         self.view_type = ttk.Combobox(
             parent, 
             values=VISUALIZATION_OPTIONS,
             state="readonly",
-            font=('Segoe UI', FONT_SIZES['normal']),
+            font=('Segoe UI', 8),
             style='Modern.TCombobox'
         )
         self.view_type.set(VISUALIZATION_OPTIONS[0])  # Default to first option
-        self.view_type.pack(fill=tk.X, pady=(0, 15))
+        self.view_type.pack(fill=tk.X, pady=(0, 8))
         
         # Bind change event
         self.view_type.bind("<<ComboboxSelected>>", self._on_view_type_change)
     
     def _create_action_buttons(self, parent):
-        """Create action buttons with modern styling"""
+        """Create compact action buttons with modern styling"""
         button_frame = tk.Frame(parent, bg=self.colors['surface'])
         button_frame.pack(fill=tk.X)
         
@@ -92,27 +92,27 @@ class ControlsPanelComponent:
         self.generate_btn = tk.Button(
             button_frame, 
             text="🔄 Actualizează",
-            font=('Segoe UI', FONT_SIZES['normal'], 'bold'),
+            font=('Segoe UI', 8, 'bold'),
             bg=self.colors['primary'],
             fg='white',
             relief='flat',
-            padx=15, 
-            pady=8,
+            padx=8, 
+            pady=4,
             cursor='hand2',
             command=self._on_generate_click
         )
-        self.generate_btn.pack(fill=tk.X, pady=(0, 8))
+        self.generate_btn.pack(fill=tk.X, pady=(0, 4))
         
         # Test data button
         self.test_data_btn = tk.Button(
             button_frame, 
             text="🔧 Date Test",
-            font=('Segoe UI', FONT_SIZES['normal'], 'bold'),
+            font=('Segoe UI', 8, 'bold'),
             bg=self.colors['success'],
             fg='white',
             relief='flat',
-            padx=15, 
-            pady=8,
+            padx=8, 
+            pady=4,
             cursor='hand2',
             command=self._on_test_data_click
         )

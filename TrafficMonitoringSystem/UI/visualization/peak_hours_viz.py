@@ -80,24 +80,34 @@ class PeakHoursVisualization(BaseVisualization):
         self.add_value_labels_to_bars(ax, bars2, all_values)
     
     def generate_stats(self, total_peak, total_normal, peak_mari, peak_mici, normal_mari, normal_mici, formatted_date):
-        """Generate peak hours analysis statistics"""
+        """Generate peak hours analysis statistics with colored sections"""
         # Calculate factor
         factor = total_peak / total_normal if total_normal > 0 else 0
         
-        stats_text = f"""🔥 ORE DE VÂRF {formatted_date}
-
-📊 COMPARAȚIE:
-    Ore de vârf: {total_peak:,}
-    Ore normale: {total_normal:,}
-    Factor: {factor:.1f}x mai intens la ore de vârf
-
-🚛 VEHICULE MARI:
-    Ore de vârf: {peak_mari:,} ({(peak_mari/total_peak*100) if total_peak > 0 else 0:.1f}%)
-    Normal: {normal_mari:,} ({(normal_mari/total_normal*100) if total_normal > 0 else 0:.1f}%)
-
-🚗 VEHICULE MICI:
-    Ore de vârf: {peak_mici:,} ({(peak_mici/total_peak*100) if total_peak > 0 else 0:.1f}%)
-    Normal: {normal_mici:,} ({(normal_mici/total_normal*100) if total_normal > 0 else 0:.1f}%)
-"""
+        # Clear previous stats and create colored sections
+        self.stats_panel.clear_stats()
         
-        self.stats_panel.display_stats(stats_text)
+        # Comparison section
+        self.stats_panel.add_stats_section(
+            title="📊 Comparație generale", 
+            content=f"Ore de vârf: {total_peak:,}\nOre normale: {total_normal:,}\nFactor: {factor:.1f}x mai intens la vârf",
+            title_color=self.colors['primary']
+        )
+        
+        self.stats_panel.add_divider()
+        
+        # Large vehicles section
+        self.stats_panel.add_stats_section(
+            title="🚛 Vehicule mari", 
+            content=f"Ore de vârf: {peak_mari:,} ({(peak_mari/total_peak*100) if total_peak > 0 else 0:.1f}%)\nOre normale: {normal_mari:,} ({(normal_mari/total_normal*100) if total_normal > 0 else 0:.1f}%)",
+            title_color=self.colors['danger']
+        )
+        
+        self.stats_panel.add_divider()
+        
+        # Small vehicles section
+        self.stats_panel.add_stats_section(
+            title="🚗 Vehicule mici", 
+            content=f"Ore de vârf: {peak_mici:,} ({(peak_mici/total_peak*100) if total_peak > 0 else 0:.1f}%)\nOre normale: {normal_mici:,} ({(normal_mici/total_normal*100) if total_normal > 0 else 0:.1f}%)",
+            title_color=self.colors['success']
+        )

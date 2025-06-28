@@ -36,25 +36,25 @@ class CalendarPanelComponent:
     
     def _create_card_header(self):
         """Create compact card header"""
-        header_frame = tk.Frame(self.card_frame, bg=self.colors['primary'], height=CARD_HEADER_HEIGHT)
+        header_frame = tk.Frame(self.card_frame, bg=self.colors['primary'], height=28)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         header_label = tk.Label(
             header_frame, 
             text="📅 Data",
-            font=('Segoe UI', FONT_SIZES['card_header'], 'bold'),
+            font=('Segoe UI', FONT_SIZES['normal'], 'bold'),
             bg=self.colors['primary'],
             fg='white'
         )
         header_label.pack(expand=True)
     
     def _create_calendar_content(self):
-        """Create calendar widget"""
+        """Create compact calendar widget"""
         calendar_content = tk.Frame(self.card_frame, bg=self.colors['surface'])
-        calendar_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        calendar_content.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
-        # Calendar widget with modern styling
+        # Smaller calendar widget optimized for 1200x800
         self.calendar = Calendar(
             calendar_content,
             selectmode='day',
@@ -73,9 +73,9 @@ class CalendarPanelComponent:
             normalforeground=self.colors['dark'],
             weekendbackground=self.colors['surface'],
             weekendforeground=self.colors['muted'],
-            font=('Segoe UI', 8)  # Smaller font for compact view
+            font=('Segoe UI', 7)  # Even smaller font for compact view
         )
-        self.calendar.pack(pady=5)
+        self.calendar.pack(pady=2)
         
         # Bind calendar selection event
         self.calendar.bind("<<CalendarSelected>>", self._on_calendar_select)

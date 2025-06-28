@@ -108,7 +108,8 @@ class HourlyVisualization(BaseVisualization):
                 f"🚛 Vehicule mari: {peak_hour_mari}:00 ({max(vehicule_mari)})\n"
                 f"📈 Medie: {total/len(hours):.1f}/oră"
             )
-
+            self.stats_panel.add_divider()
+            
             self.stats_panel.add_stats_section(
                 "⏰ ORE DE VÂRF",
                 peak_analysis,
@@ -124,7 +125,9 @@ class HourlyVisualization(BaseVisualization):
                     distribution_lines.append(
                         f"{hour}:00 → {vehicule_mari[i]} 🚛, {vehicule_mici[i]} 🚗 (total: {hour_total})"
                     )
-
+                    
+        self.stats_panel.add_divider()
+        
         if distribution_lines:
             self.stats_panel.add_stats_section(
                 "📋 DISTRIBUȚIA ORARĂ",

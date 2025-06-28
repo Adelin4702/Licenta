@@ -101,7 +101,7 @@ class WeeklyVisualization(BaseVisualization):
         ax.fill_between(x_pos, vehicule_mici, alpha=CHART_CONFIG['alpha_fill'], color=self.colors['success'])
     
     def generate_stats(self, vehicule_mari, vehicule_mici, day_labels, week_start, week_end):
-        """Generate comprehensive weekly statistics"""
+        """Generate comprehensive weekly statistics with colored sections"""
         total_mari_week = sum(vehicule_mari)
         total_mici_week = sum(vehicule_mici)
         total_week = total_mari_week + total_mici_week
@@ -120,27 +120,44 @@ class WeeklyVisualization(BaseVisualization):
         weekend_total = sum(total_daily[5:7])
         day_labels_clean = [label.replace('\n', ' ') for label in day_labels]
         
-        stats_text = f"""📅 SĂPTĂMÂNA {DateUtils.format_date_short(week_start.strftime("%Y-%m-%d"))}-{DateUtils.format_date_short(week_end.strftime("%Y-%m-%d"))}
-
-📊 TOTALURI:
-    Total: {total_week:,} vehicule
-    Mari: {total_mari_week:,} ({(total_mari_week/total_week*100):.1f}%)
-    Mici: {total_mici_week:,} ({(total_mici_week/total_week*100):.1f}%)
-    Medie zilnică: {total_week/7:.0f}
-
-🏆 EXTREME:
-    Cel mai mult:  {day_labels_clean[max_day_idx]} ({total_daily[max_day_idx]:,})
-    Cel mai puțin: {day_labels_clean[min_day_idx]} ({total_daily[min_day_idx]:,})
-
-💼 LUCRĂTOARE vs WEEKEND:
-    Luni-Vineri: {weekdays_total:,} ({weekdays_total/5:.0f}/zi)
-    Sâmbătă-Duminică: {weekend_total:,} ({weekend_total/2:.0f}/zi)
-
-📈 ZILNIC:"""
+        # Clear previous stats and create colored sections
+        self.stats_panel.clear_stats()
         
+        # Totals section
+        self.stats_panel.add_stats_section(
+            title="📊 Totaluri săptămânale", 
+            content=f"Total: {total_week:,} vehicule\nMari: {total_mari_week:,} ({(total_mari_week/total_week*100):.1f}%)\nMici: {total_mici_week:,} ({(total_mici_week/total_week*100):.1f}%)\nMedie zilnică: {total_week/7:.0f}",
+            title_color=self.colors['primary']
+        )
+        
+        self.stats_panel.add_divider()
+        
+        # Extremes section
+        self.stats_panel.add_stats_section(
+            title="🏆 Zile extreme", 
+            content=f"Cel mai mult: {day_labels_clean[max_day_idx]} ({total_daily[max_day_idx]:,})\nCel mai puțin: {day_labels_clean[min_day_idx]} ({total_daily[min_day_idx]:,})",
+            title_color=self.colors['warning']
+        )
+        
+        self.stats_panel.add_divider()
+        
+        # Workdays vs weekend section
+        self.stats_panel.add_stats_section(
+            title="💼 Zile Lucrătoare vs Weekend", 
+            content=f"Luni-Vineri: {weekdays_total:,} ({weekdays_total/5:.0f}/zi)\nSâmbătă-Duminică: {weekend_total:,} ({weekend_total/2:.0f}/zi)",
+            title_color=self.colors['success']
+        )
+        
+        self.stats_panel.add_divider()
+        
+        # Daily breakdown
+        daily_content = ""
         for i, day_label in enumerate(day_labels_clean):
             if i < len(total_daily) and total_daily[i] > 0:
-                stats_text += f"""
-    {day_label}: {total_daily[i]:,} (M:{vehicule_mari[i]}, m:{vehicule_mici[i]})"""
+                daily_content += f"{day_label}: {total_daily[i]:,} (M:{vehicule_mari[i]}, m:{vehicule_mici[i]})\n"
         
-        self.stats_panel.display_stats(stats_text)
+        self.stats_panel.add_stats_section(
+            title="📈 Distribuția zilnică", 
+            content=daily_content.strip(),
+            title_color=self.colors['info']
+        )

@@ -20,7 +20,8 @@ VISUALIZATION_OPTIONS = [
     "🥧 Distribuție procentuală", 
     "🔥 Comparație ore de vârf",
     "📈 Trafic săptămânal",
-    "📅 Tendință lunară"
+    "📅 Tendință lunară",
+    "🗓️ Evoluție anuală"  # NEW YEARLY VIEW
 ]
 
 # Peak hours definition

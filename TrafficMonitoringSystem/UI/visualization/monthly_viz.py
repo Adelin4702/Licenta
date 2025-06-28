@@ -6,7 +6,7 @@ from UI.utils.date_utils import DateUtils
 from UI.utils.constants import MESSAGES
 
 class MonthlyVisualization(BaseVisualization):
-    """Monthly trend visualization with stacked area charts"""
+    """Monthly trend visualization with proper area charts"""
     
     def generate_visualization(self, date, formatted_date):
         """Generate modern monthly trend view"""
@@ -21,11 +21,11 @@ class MonthlyVisualization(BaseVisualization):
         avg_mari = [row[1] for row in data]
         avg_mici = [row[2] for row in data]
         
-        # Create modern stacked area chart
+        # Create modern dual area chart
         fig = self.styles.create_modern_figure()
         ax = fig.add_subplot(111)
         
-        # Create stacked area chart
+        # Create proper monthly area chart
         self._create_monthly_area_chart(ax, hours, avg_mari, avg_mici)
         
         # Apply styling
@@ -44,16 +44,26 @@ class MonthlyVisualization(BaseVisualization):
         self.generate_stats(avg_mari, avg_mici, hours, month_display)
     
     def _create_monthly_area_chart(self, ax, hours, avg_mari, avg_mici):
-        """Create styled stacked area chart for monthly data"""
-        # Create gradient stacked area
-        ax.stackplot(hours, avg_mari, avg_mici,
-                    labels=['Vehicule Mari', 'Vehicule Mici'],
-                    colors=[self.colors['danger'], self.colors['success']],
-                    alpha=0.8)
+        """Create proper area chart for monthly data with separate areas"""
+        # Separate filled areas for better visualization
+        ax.fill_between(hours, 0, avg_mari, 
+                       color=self.colors['danger'], alpha=0.6, 
+                       label='Vehicule Mari')
+        ax.fill_between(hours, 0, avg_mici, 
+                       color=self.colors['success'], alpha=0.6, 
+                       label='Vehicule Mici')
         
-        # Add trend lines on top
-        ax.plot(hours, avg_mari, color=self.colors['danger'], linewidth=2, alpha=0.9)
-        ax.plot(hours, avg_mici, color=self.colors['success'], linewidth=2, alpha=0.9)
+        # Add trend lines on top for clarity
+        ax.plot(hours, avg_mari, color=self.colors['danger'], linewidth=2, 
+                alpha=0.9, linestyle='-')
+        ax.plot(hours, avg_mici, color=self.colors['success'], linewidth=2, 
+                alpha=0.9, linestyle='-')
+        
+        # Add markers for data points
+        ax.scatter(hours, avg_mari, color=self.colors['danger'], 
+                  s=20, alpha=0.8, zorder=5)
+        ax.scatter(hours, avg_mici, color=self.colors['success'], 
+                  s=20, alpha=0.8, zorder=5)
     
     def generate_stats(self, avg_mari, avg_mici, hours, month_display):
         """Generate comprehensive monthly statistics"""
@@ -67,31 +77,47 @@ class MonthlyVisualization(BaseVisualization):
         total = total_mari + total_mici
         
         # Calculate average per hour across the month
-        avg_mari_per_hour = total_mari / len(avg_mari)
-        avg_mici_per_hour = total_mici / len(avg_mici)
+        avg_mari_per_hour = total_mari / len(avg_mari) if avg_mari else 0
+        avg_mici_per_hour = total_mici / len(avg_mici) if avg_mici else 0
         
-        # Find peak hours
-        peak_mari_idx = avg_mari.index(max(avg_mari)) if max(avg_mari) > 0 else 0
-        peak_mici_idx = avg_mici.index(max(avg_mici)) if max(avg_mici) > 0 else 0
+        # Find peak hours (safely)
+        peak_mari_idx = avg_mari.index(max(avg_mari)) if avg_mari and max(avg_mari) > 0 else 0
+        peak_mici_idx = avg_mici.index(max(avg_mici)) if avg_mici and max(avg_mici) > 0 else 0
         
-        stats_text = f"""📅 LUNA {month_display}
-
-📊 MEDII LUNARE:
-    Total: {(avg_mici_per_hour + avg_mari_per_hour):.1f}/oră
-    Mari: {avg_mari_per_hour:.1f}/oră ({(total_mari/total*100) if total > 0 else 0:.1f}%)
-    Mici: {avg_mici_per_hour:.1f}/oră ({(total_mici/total*100) if total > 0 else 0:.1f}%)
-
-⏰ ORE DE VÂRF:
-    🚛 Mari: {hours[peak_mari_idx] if peak_mari_idx < len(hours) else 0}:00 ({avg_mari[peak_mari_idx] if peak_mari_idx < len(avg_mari) else 0:.1f})
-    🚗 Mici: {hours[peak_mici_idx] if peak_mici_idx < len(hours) else 0}:00 ({avg_mici[peak_mici_idx] if peak_mici_idx < len(avg_mici) else 0:.1f})
-
-📈 DISTRIBUȚIA ORARĂ:"""
+        # Calculate percentages safely
+        mari_percentage = (total_mari/total*100) if total > 0 else 0
+        mici_percentage = (total_mici/total*100) if total > 0 else 0
         
-        # Show hourly distribution
+        # Clear previous stats and create colored sections
+        self.stats_panel.clear_stats()
+        
+        # General overview section
+        self.stats_panel.add_stats_section(
+            title="📅 Medii lunare", 
+            content=f"Total: {(avg_mici_per_hour + avg_mari_per_hour):.1f}/oră (total: {total:.1f})\nMari: {avg_mari_per_hour:.1f}/oră ({mari_percentage:.1f}%) (total: {total_mari:.1f})\nMici: {avg_mici_per_hour:.1f}/oră ({mici_percentage:.1f}%) (total: {total_mici:.1f})",
+            title_color=self.colors['primary']
+        )
+        
+        self.stats_panel.add_divider()
+        
+        # Peak hours section
+        self.stats_panel.add_stats_section(
+            title="⏰ Ore de vârf", 
+            content=f"🚛 Mari: {hours[peak_mari_idx] if peak_mari_idx < len(hours) else 0}:00 ({avg_mari[peak_mari_idx] if peak_mari_idx < len(avg_mari) else 0:.1f})\n🚗 Mici: {hours[peak_mici_idx] if peak_mici_idx < len(hours) else 0}:00 ({avg_mici[peak_mici_idx] if peak_mici_idx < len(avg_mici) else 0:.1f})",
+            title_color=self.colors['warning']
+        )
+        
+        self.stats_panel.add_divider()
+        
+        # Hourly breakdown
+        hourly_content = ""
         for i, hour in enumerate(hours):
             if i < len(avg_mari) and i < len(avg_mici):
                 hour_total = avg_mari[i] + avg_mici[i]
-                stats_text += f"""
-    {hour}:00 → {avg_mari[i]:.1f} 🚛, {avg_mici[i]:.1f} 🚗 (total: {hour_total:.1f})"""
+                hourly_content += f"{hour}:00 → {avg_mari[i]:.1f} 🚛, {avg_mici[i]:.1f} 🚗 (total: {hour_total:.1f})\n"
         
-        self.stats_panel.display_stats(stats_text)
+        self.stats_panel.add_stats_section(
+            title="📈 Distribuția orară", 
+            content=hourly_content.strip(),
+            title_color=self.colors['info']
+        )

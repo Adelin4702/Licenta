@@ -16,9 +16,9 @@ class StatsPanelComponent:
         self.create_stats_panel()
     
     def create_stats_panel(self):
-        """Create statistics panel with scrollable content"""
-        # Stats container with fixed width
-        self.stats_container = tk.Frame(self.parent, bg=self.colors['surface'], width=STATS_PANEL_WIDTH)
+        """Create statistics panel with enhanced scrollable content"""
+        # Stats container with LARGER fixed width for more space
+        self.stats_container = tk.Frame(self.parent, bg=self.colors['surface'], width=320)  # INCREASED from 250 to 320
         self.stats_container.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
         self.stats_container.pack_propagate(False)
         
@@ -48,47 +48,85 @@ class StatsPanelComponent:
         ).pack(expand=True)
     
     def _create_scrollable_content(self):
-        """Create scrollable content area for statistics"""
-        # Canvas and scrollbar setup
-        self.canvas = tk.Canvas(self.stats_container, bg=self.colors['surface'], highlightthickness=0)
-        self.scrollbar = ttk.Scrollbar(self.stats_container, orient="vertical", command=self.canvas.yview)
+        """Create enhanced scrollable content area with better scrolling"""
+        # Create main scroll frame
+        scroll_frame = tk.Frame(self.stats_container, bg=self.colors['surface'])
+        scroll_frame.pack(fill="both", expand=True, padx=3, pady=3)
         
-        self.scrollbar.pack(side="right", fill="y")
-        self.canvas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        # Canvas for scrolling
+        self.canvas = tk.Canvas(scroll_frame, bg=self.colors['surface'], highlightthickness=0)
         
-        self.canvas.configure(yscrollcommand=self.scrollbar.set)
+        # Scrollbars
+        self.v_scrollbar = ttk.Scrollbar(scroll_frame, orient="vertical", command=self.canvas.yview)
+        self.h_scrollbar = ttk.Scrollbar(scroll_frame, orient="horizontal", command=self.canvas.xview)  # HORIZONTAL SCROLL
         
-        # Stats content frame
+        # Configure canvas scrolling
+        self.canvas.configure(
+            yscrollcommand=self.v_scrollbar.set,
+            xscrollcommand=self.h_scrollbar.set  # HORIZONTAL SCROLL CONFIG
+        )
+        
+        # Grid layout for proper scrollbar positioning
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        self.v_scrollbar.grid(row=0, column=1, sticky="ns")
+        self.h_scrollbar.grid(row=1, column=0, sticky="ew")  # HORIZONTAL SCROLLBAR
+        
+        # Configure grid weights
+        scroll_frame.grid_rowconfigure(0, weight=1)
+        scroll_frame.grid_columnconfigure(0, weight=1)
+        
+        # Stats content frame with LARGER initial width
         self.text_stats_frame = tk.Frame(self.canvas, bg=self.colors['surface'])
         self.canvas_window = self.canvas.create_window((0, 0), window=self.text_stats_frame, anchor="nw")
         
         # Configure scrolling
-        self._setup_scroll_configuration()
+        self._setup_enhanced_scroll_configuration()
         
-        # Mouse wheel scrolling
-        self._setup_mouse_wheel_scrolling()
+        # Enhanced mouse wheel scrolling
+        self._setup_enhanced_mouse_wheel_scrolling()
     
-    def _setup_scroll_configuration(self):
-        """Setup scroll region configuration"""
+    def _setup_enhanced_scroll_configuration(self):
+        """Setup enhanced scroll region configuration"""
         def configure_scroll(event):
+            # Update scroll region to encompass all content
             self.canvas.configure(scrollregion=self.canvas.bbox("all"))
-            self.canvas.itemconfig(self.canvas_window, width=event.width)
+            
+            # Get the current size of the canvas
+            canvas_width = self.canvas.winfo_width()
+            canvas_height = self.canvas.winfo_height()
+            
+            # Get the required size of the content
+            content_width = self.text_stats_frame.winfo_reqwidth()
+            content_height = self.text_stats_frame.winfo_reqheight()
+            
+            # Set the window size - allow horizontal scrolling if content is wider
+            frame_width = max(content_width, canvas_width - self.v_scrollbar.winfo_width())
+            frame_height = max(content_height, canvas_height)
+            
+            self.canvas.itemconfig(self.canvas_window, width=frame_width, height=frame_height)
+        
+        def on_frame_configure(event):
+            self.canvas.configure(scrollregion=self.canvas.bbox("all"))
         
         self.canvas.bind('<Configure>', configure_scroll)
-        self.text_stats_frame.bind('<Configure>', 
-                                  lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
+        self.text_stats_frame.bind('<Configure>', on_frame_configure)
     
-    def _setup_mouse_wheel_scrolling(self):
-        """Setup mouse wheel scrolling for the canvas"""
+    def _setup_enhanced_mouse_wheel_scrolling(self):
+        """Setup enhanced mouse wheel scrolling for Windows"""
         def _on_mousewheel(event):
+            # Vertical scrolling
             self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
         
-        # Bind to multiple widgets to ensure scrolling works
+        def _on_shift_mousewheel(event):
+            # Horizontal scrolling with Shift+Mouse wheel
+            self.canvas.xview_scroll(int(-1*(event.delta/120)), "units")
+        
+        # Bind scrolling events to multiple widgets (Windows only)
         widgets_to_bind = [self.canvas, self.text_stats_frame, self.stats_container]
         for widget in widgets_to_bind:
+            # Windows mouse wheel events
             widget.bind("<MouseWheel>", _on_mousewheel)
-            widget.bind("<Button-4>", lambda e: self.canvas.yview_scroll(-1, "units"))
-            widget.bind("<Button-5>", lambda e: self.canvas.yview_scroll(1, "units"))
+            widget.bind("<Shift-MouseWheel>", _on_shift_mousewheel)
     
     def show_default_message(self):
         """Show default message when no stats are available"""
@@ -100,7 +138,7 @@ class StatsPanelComponent:
             font=('Segoe UI', FONT_SIZES['normal']),
             bg=self.colors['surface'],
             fg=self.colors['muted'],
-            wraplength=220,
+            wraplength=300,  # INCREASED wrap length for wider panel
             justify=tk.CENTER
         )
         default_label.pack(expand=True, pady=20)
@@ -111,7 +149,7 @@ class StatsPanelComponent:
             widget.destroy()
     
     def display_stats(self, stats_text):
-        """Display statistics text in the panel"""
+        """Display statistics text in the panel with better formatting"""
         self.clear_stats()
         
         stats_label = tk.Label(
@@ -122,7 +160,7 @@ class StatsPanelComponent:
             fg=self.colors['dark'],
             justify=tk.LEFT,
             anchor='nw',
-            wraplength=220
+            wraplength=300  # INCREASED wrap length for better text flow
         )
         stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
         
@@ -131,7 +169,7 @@ class StatsPanelComponent:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
     
     def add_stats_section(self, title, content, title_color=None):
-        """Add a formatted statistics section"""
+        """Add a formatted statistics section with better spacing"""
         if not title_color:
             title_color = self.colors['primary']
         
@@ -142,7 +180,7 @@ class StatsPanelComponent:
             font=('Segoe UI', FONT_SIZES['normal'], 'bold'),
             bg=self.colors['surface'],
             fg=title_color,
-            wraplength=220,
+            wraplength=290,  # INCREASED wrap length
             justify=tk.LEFT
         )
         title_label.pack(anchor='w', padx=5, pady=(10, 5))
@@ -156,7 +194,7 @@ class StatsPanelComponent:
             fg=self.colors['dark'],
             justify=tk.LEFT,
             anchor='nw',
-            wraplength=200
+            wraplength=280  # INCREASED wrap length
         )
         content_label.pack(anchor='w', padx=15, pady=(0, 5))
         
@@ -165,11 +203,11 @@ class StatsPanelComponent:
         self.canvas.configure(scrollregion=self.canvas.bbox("all"))
     
     def add_metric_card(self, title, value, unit="", icon="📊", color=None):
-        """Add a styled metric card"""
+        """Add a styled metric card with better sizing"""
         if not color:
             color = self.colors['primary']
         
-        # Card frame
+        # Card frame with better width
         card_frame = tk.Frame(self.text_stats_frame, bg=self.colors['light'], relief='solid', bd=1)
         card_frame.pack(fill=tk.X, padx=5, pady=5)
         
@@ -205,3 +243,4 @@ class StatsPanelComponent:
     def scroll_to_top(self):
         """Scroll to the top of the stats panel"""
         self.canvas.yview_moveto(0)
+        self.canvas.xview_moveto(0)  # Also reset horizontal scroll
