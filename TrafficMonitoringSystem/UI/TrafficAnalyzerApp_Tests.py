@@ -12,7 +12,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 try:
     from TrafficAnalyzerApp import BinaryTrafficAnalyzerApp
-    from db_functions import TrafficDatabase
+    from ..MonitoringApp.db_functions import TrafficDatabase
 except ImportError as e:
     print(f"Eroare la importul modulelor: {e}")
     print("Asigură-te că fișierele TrafficAnalyzerApp.py și db_functions.py sunt în același director cu testele")
