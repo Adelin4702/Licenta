@@ -131,21 +131,21 @@ class BinaryTrafficAnalyzerApp:
                            relief='solid')
         
     def create_modern_gui(self):
-        """Create modern, professional GUI"""
-        # Main container with padding
+        """Create modern, professional GUI optimized for 1200x800"""
+        # Main container with reduced padding
         main_frame = tk.Frame(self.root, bg=self.colors['background'])
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Header section
         self.create_header(main_frame)
         
         # Content area
         content_frame = tk.Frame(main_frame, bg=self.colors['background'])
-        content_frame.pack(fill=tk.BOTH, expand=True, pady=(20, 0))
+        content_frame.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
         
-        # Left panel (controls) - made smaller
-        left_panel = tk.Frame(content_frame, bg=self.colors['background'], width=320)
-        left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 15))
+        # Left panel (controls) - optimized width
+        left_panel = tk.Frame(content_frame, bg=self.colors['background'], width=280)
+        left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
         left_panel.pack_propagate(False)
         
         # Right panel (visualization)
@@ -160,49 +160,38 @@ class BinaryTrafficAnalyzerApp:
         self.selected_date = datetime.datetime.now().strftime("%Y-%m-%d")
         
     def create_header(self, parent):
-        """Create modern header with gradient effect"""
-        header_frame = tk.Frame(parent, bg=self.colors['surface'], height=120)
+        """Create compact header"""
+        header_frame = tk.Frame(parent, bg=self.colors['surface'], height=60)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         # Add subtle shadow effect
-        shadow_frame = tk.Frame(parent, bg='#e2e8f0', height=2)
+        shadow_frame = tk.Frame(parent, bg='#e2e8f0', height=1)
         shadow_frame.pack(fill=tk.X)
         
         # Header content
         header_content = tk.Frame(header_frame, bg=self.colors['surface'])
-        header_content.pack(expand=True, fill=tk.BOTH, padx=40, pady=20)
+        header_content.pack(expand=True, fill=tk.BOTH, padx=20, pady=10)
         
-        # Title and subtitle
-        title_label = tk.Label(header_content, 
+        # Title and status in same line
+        title_status_frame = tk.Frame(header_content, bg=self.colors['surface'])
+        title_status_frame.pack(fill=tk.X)
+        
+        # Title on left
+        title_label = tk.Label(title_status_frame, 
                               text="🚗 Analizator Trafic Inteligent",
-                              font=('Segoe UI', 28, 'bold'),
+                              font=('Segoe UI', 18, 'bold'),
                               bg=self.colors['surface'],
                               fg=self.colors['primary'])
-        title_label.pack(anchor='w')
+        title_label.pack(side=tk.LEFT)
         
+        # Subtitle
         subtitle_label = tk.Label(header_content,
                                  text="Analiză avansată pentru vehicule mari și mici",
-                                 font=('Segoe UI', 14),
+                                 font=('Segoe UI', 11),
                                  bg=self.colors['surface'],
                                  fg=self.colors['secondary'])
-        subtitle_label.pack(anchor='w', pady=(5, 0))
-        
-        # Status indicator
-        status_frame = tk.Frame(header_content, bg=self.colors['surface'])
-        status_frame.pack(anchor='w', pady=(10, 0))
-        
-        status_dot = tk.Label(status_frame, text="●", 
-                             font=('Segoe UI', 12),
-                             fg=self.colors['success'],
-                             bg=self.colors['surface'])
-        status_dot.pack(side=tk.LEFT)
-        
-        status_text = tk.Label(status_frame, text=f"Conectat | {len(self.dates_with_data)} zile cu date",
-                              font=('Segoe UI', 11),
-                              bg=self.colors['surface'],
-                              fg=self.colors['muted'])
-        status_text.pack(side=tk.LEFT, padx=(5, 0))
+        subtitle_label.pack(anchor='w', pady=(2, 0))
         
     def create_control_panel(self, parent):
         """Create modern control panel"""
@@ -216,81 +205,81 @@ class BinaryTrafficAnalyzerApp:
         self.create_controls_card(parent)
         
     def create_filters_card(self, parent):
-        """Create filters card for city, location, camera selection"""
+        """Create compact filters card for city, location, camera selection"""
         card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        card_frame.pack(fill=tk.X, pady=(0, 15))
+        card_frame.pack(fill=tk.X, pady=(0, 8))
         
         # Card header
-        header_frame = tk.Frame(card_frame, bg=self.colors['accent'], height=35)
+        header_frame = tk.Frame(card_frame, bg=self.colors['accent'], height=28)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         header_label = tk.Label(header_frame, text="🔍 Filtre",
-                               font=('Segoe UI', 12, 'bold'),
+                               font=('Segoe UI', 10, 'bold'),
                                bg=self.colors['accent'],
                                fg='white')
         header_label.pack(expand=True)
         
         # Filters content
         filters_content = tk.Frame(card_frame, bg=self.colors['surface'])
-        filters_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        filters_content.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
         # City filter
         city_label = tk.Label(filters_content, text="Oraș:",
-                             font=('Segoe UI', 10, 'bold'),
+                             font=('Segoe UI', 9, 'bold'),
                              bg=self.colors['surface'],
                              fg=self.colors['dark'])
-        city_label.pack(anchor='w', pady=(0, 5))
+        city_label.pack(anchor='w', pady=(0, 2))
         
         city_values = ["Toate orașele"] + list(self.cities_data.keys())
         self.city_filter = ttk.Combobox(filters_content, 
                                        values=city_values,
                                        state="readonly",
-                                       font=('Segoe UI', 9),
+                                       font=('Segoe UI', 8),
                                        style='Modern.TCombobox')
         self.city_filter.set("Toate orașele")
-        self.city_filter.pack(fill=tk.X, pady=(0, 10))
+        self.city_filter.pack(fill=tk.X, pady=(0, 6))
         self.city_filter.bind("<<ComboboxSelected>>", self.on_city_change)
         
         # Location filter
         location_label = tk.Label(filters_content, text="Locație:",
-                                 font=('Segoe UI', 10, 'bold'),
+                                 font=('Segoe UI', 9, 'bold'),
                                  bg=self.colors['surface'],
                                  fg=self.colors['dark'])
-        location_label.pack(anchor='w', pady=(0, 5))
+        location_label.pack(anchor='w', pady=(0, 2))
         
         self.location_filter = ttk.Combobox(filters_content, 
                                            values=["Toate locațiile"],
                                            state="readonly",
-                                           font=('Segoe UI', 9),
+                                           font=('Segoe UI', 8),
                                            style='Modern.TCombobox')
         self.location_filter.set("Toate locațiile")
-        self.location_filter.pack(fill=tk.X, pady=(0, 10))
+        self.location_filter.pack(fill=tk.X, pady=(0, 6))
         self.location_filter.bind("<<ComboboxSelected>>", self.on_location_change)
         
         # Camera filter
         camera_label = tk.Label(filters_content, text="Cameră:",
-                               font=('Segoe UI', 10, 'bold'),
+                               font=('Segoe UI', 9, 'bold'),
                                bg=self.colors['surface'],
                                fg=self.colors['dark'])
-        camera_label.pack(anchor='w', pady=(0, 5))
+        camera_label.pack(anchor='w', pady=(0, 2))
         
         self.camera_filter = ttk.Combobox(filters_content, 
                                          values=["Toate camerele"],
                                          state="readonly",
-                                         font=('Segoe UI', 9),
+                                         font=('Segoe UI', 8),
                                          style='Modern.TCombobox')
         self.camera_filter.set("Toate camerele")
-        self.camera_filter.pack(fill=tk.X, pady=(0, 10))
+        self.camera_filter.pack(fill=tk.X, pady=(0, 6))
         self.camera_filter.bind("<<ComboboxSelected>>", self.on_filter_change)
         
         # Reset filters button
-        reset_btn = tk.Button(filters_content, text="🔄 Reset Filtre",
-                             font=('Segoe UI', 9, 'bold'),
+        reset_btn = tk.Button(filters_content, text="🔄 Reset",
+                             font=('Segoe UI', 8, 'bold'),
                              bg=self.colors['secondary'],
                              fg='white',
                              relief='flat',
-                             padx=10, pady=6,
+                             padx=8, pady=4,
                              cursor='hand2',
                              command=self.reset_filters)
         reset_btn.pack(fill=tk.X)
@@ -558,22 +547,22 @@ class BinaryTrafficAnalyzerApp:
     def create_calendar_card(self, parent):
         """Create compact calendar card"""
         card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        card_frame.pack(fill=tk.X, pady=(0, 15))
+        card_frame.pack(fill=tk.X, pady=(0, 8))
         
         # Compact card header
-        header_frame = tk.Frame(card_frame, bg=self.colors['primary'], height=35)
+        header_frame = tk.Frame(card_frame, bg=self.colors['primary'], height=28)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         header_label = tk.Label(header_frame, text="📅 Data",
-                               font=('Segoe UI', 12, 'bold'),
+                               font=('Segoe UI', 10, 'bold'),
                                bg=self.colors['primary'],
                                fg='white')
         header_label.pack(expand=True)
         
         # Calendar content - more compact
         calendar_content = tk.Frame(card_frame, bg=self.colors['surface'])
-        calendar_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        calendar_content.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
         # Smaller calendar widget
         self.calendar = Calendar(
@@ -594,9 +583,9 @@ class BinaryTrafficAnalyzerApp:
             normalforeground=self.colors['dark'],
             weekendbackground=self.colors['surface'],
             weekendforeground=self.colors['muted'],
-            font=('Segoe UI', 8)  # Smaller font
+            font=('Segoe UI', 7)  # Even smaller font
         )
-        self.calendar.pack(pady=5)
+        self.calendar.pack(pady=2)
         
         self.update_calendar_marks()
         self.calendar.bind("<<CalendarSelected>>", self.on_date_select)
@@ -604,29 +593,29 @@ class BinaryTrafficAnalyzerApp:
     def create_controls_card(self, parent):
         """Create compact controls card"""
         card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        card_frame.pack(fill=tk.X, pady=(0, 15))
+        card_frame.pack(fill=tk.X, pady=(0, 8))
         
         # Compact card header
-        header_frame = tk.Frame(card_frame, bg=self.colors['info'], height=35)
+        header_frame = tk.Frame(card_frame, bg=self.colors['info'], height=28)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         header_label = tk.Label(header_frame, text="⚙️ Opțiuni",
-                               font=('Segoe UI', 12, 'bold'),
+                               font=('Segoe UI', 10, 'bold'),
                                bg=self.colors['info'],
                                fg='white')
         header_label.pack(expand=True)
         
         # Controls content - more compact
         controls_content = tk.Frame(card_frame, bg=self.colors['surface'])
-        controls_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        controls_content.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
         # View type selector with compact styling
         view_label = tk.Label(controls_content, text="Tip vizualizare:",
-                             font=('Segoe UI', 10, 'bold'),
+                             font=('Segoe UI', 9, 'bold'),
                              bg=self.colors['surface'],
                              fg=self.colors['dark'])
-        view_label.pack(anchor='w', pady=(0, 5))
+        view_label.pack(anchor='w', pady=(0, 2))
         
         self.view_type = ttk.Combobox(controls_content, 
                                      values=[
@@ -637,10 +626,10 @@ class BinaryTrafficAnalyzerApp:
                                          "📅 Tendință lunară"
                                      ],
                                      state="readonly",
-                                     font=('Segoe UI', 10),
+                                     font=('Segoe UI', 8),
                                      style='Modern.TCombobox')
         self.view_type.set("📊 Trafic orar")
-        self.view_type.pack(fill=tk.X, pady=(0, 15))
+        self.view_type.pack(fill=tk.X, pady=(0, 8))
         self.view_type.bind("<<ComboboxSelected>>", self.generate_visualization)
         
         # Compact action buttons
@@ -648,21 +637,21 @@ class BinaryTrafficAnalyzerApp:
         button_frame.pack(fill=tk.X)
         
         generate_btn = tk.Button(button_frame, text="🔄 Actualizează",
-                               font=('Segoe UI', 10, 'bold'),
+                               font=('Segoe UI', 8, 'bold'),
                                bg=self.colors['primary'],
                                fg='white',
                                relief='flat',
-                               padx=15, pady=8,
+                               padx=8, pady=4,
                                cursor='hand2',
                                command=self.generate_visualization)
-        generate_btn.pack(fill=tk.X, pady=(0, 8))
+        generate_btn.pack(fill=tk.X, pady=(0, 4))
         
         test_data_btn = tk.Button(button_frame, text="🔧 Date Test",
-                                font=('Segoe UI', 10, 'bold'),
+                                font=('Segoe UI', 8, 'bold'),
                                 bg=self.colors['success'],
                                 fg='white',
                                 relief='flat',
-                                padx=15, pady=8,
+                                padx=8, pady=4,
                                 cursor='hand2',
                                 command=self.add_test_data)
         test_data_btn.pack(fill=tk.X)
@@ -679,93 +668,129 @@ class BinaryTrafficAnalyzerApp:
         test_data_btn.bind("<Leave>", lambda e: on_leave(e, test_data_btn, self.colors['success']))
         
     def create_visualization_panel(self, parent):
-        """Create visualization panel with optimized layout"""
+        """Create visualization panel optimized for 1200x800"""
         # Main visualization card
         viz_card = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
         viz_card.pack(fill=tk.BOTH, expand=True)
         
         # Card header
-        header_frame = tk.Frame(viz_card, bg=self.colors['dark'], height=50)
+        header_frame = tk.Frame(viz_card, bg=self.colors['dark'], height=35)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         self.viz_title = tk.Label(header_frame, text="📈 Vizualizare Trafic",
-                                 font=('Segoe UI', 14, 'bold'),
+                                 font=('Segoe UI', 12, 'bold'),
                                  bg=self.colors['dark'],
                                  fg='white')
         self.viz_title.pack(expand=True)
         
         # Content container with horizontal split
         content_container = tk.Frame(viz_card, bg=self.colors['surface'])
-        content_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        content_container.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
-        # Graph area - takes 70% of width
+        # Graph area - takes most of the width
         self.graph_frame = tk.Frame(content_container, bg=self.colors['light'])
         self.graph_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 0))
         
         # Initial placeholder
         placeholder_label = tk.Label(self.graph_frame,
                                     text="🎯\nSelectează o opțiune de vizualizare\npentru a începe analiza",
-                                    font=('Segoe UI', 14),
+                                    font=('Segoe UI', 12),
                                     bg=self.colors['light'],
                                     fg=self.colors['muted'],
                                     justify=tk.CENTER)
         placeholder_label.pack(expand=True)
         
-        # Text-based stats area - takes 30% of width
+        # Text-based stats area - compact for 1200x800
         self.create_compact_stats_panel(content_container)
         
     def create_compact_stats_panel(self, parent):
         """Create compact stats panel on the right side"""
-        # Stats frame with fixed width - 30% of space
-        stats_container = tk.Frame(parent, bg=self.colors['surface'], width=250)
+        # Stats frame with fixed width - optimized for 1200x800
+        stats_container = tk.Frame(parent, bg=self.colors['surface'], width=200)
         stats_container.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
         stats_container.pack_propagate(False)
         
         # Stats header
-        stats_header = tk.Frame(stats_container, bg=self.colors['primary'], height=35)
+        stats_header = tk.Frame(stats_container, bg=self.colors['primary'], height=28)
         stats_header.pack(fill=tk.X)
         stats_header.pack_propagate(False)
         
         tk.Label(stats_header, text="📊 Statistici",
-                font=('Segoe UI', 12, 'bold'),
+                font=('Segoe UI', 10, 'bold'),
                 bg=self.colors['primary'],
                 fg='white').pack(expand=True)
         
-        # Scrollable stats content
-        canvas = tk.Canvas(stats_container, bg=self.colors['surface'], highlightthickness=0)
-        scrollbar = ttk.Scrollbar(stats_container, orient="vertical", command=canvas.yview)
+        # Create frame for scrollbars and canvas
+        scroll_frame = tk.Frame(stats_container, bg=self.colors['surface'])
+        scroll_frame.pack(fill="both", expand=True, padx=3, pady=3)
         
-        scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        # Create canvas and scrollbars
+        canvas = tk.Canvas(scroll_frame, bg=self.colors['surface'], highlightthickness=0)
+        v_scrollbar = ttk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
+        h_scrollbar = ttk.Scrollbar(scroll_frame, orient="horizontal", command=canvas.xview)
         
-        canvas.configure(yscrollcommand=scrollbar.set)
-        
-        # Text stats container
+        # Create scrollable frame
         self.text_stats_frame = tk.Frame(canvas, bg=self.colors['surface'])
+        
+        # Configure scrollbars
+        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        
+        # Grid layout for proper scrollbar positioning
+        canvas.grid(row=0, column=0, sticky="nsew")
+        v_scrollbar.grid(row=0, column=1, sticky="ns")
+        h_scrollbar.grid(row=1, column=0, sticky="ew")
+        
+        # Configure grid weights
+        scroll_frame.grid_rowconfigure(0, weight=1)
+        scroll_frame.grid_columnconfigure(0, weight=1)
+        
+        # Create window in canvas
         canvas_window = canvas.create_window((0, 0), window=self.text_stats_frame, anchor="nw")
         
-        def configure_scroll(event):
+        # Update scroll region when frame size changes
+        def on_frame_configure(event):
             canvas.configure(scrollregion=canvas.bbox("all"))
-            canvas.itemconfig(canvas_window, width=event.width)
-            
-        canvas.bind('<Configure>', configure_scroll)
-        self.text_stats_frame.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        
+        # Update canvas window size when canvas size changes
+        def on_canvas_configure(event):
+            # Get the current size of the text frame
+            canvas.update_idletasks()
+            bbox = canvas.bbox("all")
+            if bbox:
+                # Set minimum width to canvas width, but allow frame to be wider
+                frame_width = max(bbox[2], event.width - v_scrollbar.winfo_width())
+                canvas.itemconfig(canvas_window, width=frame_width)
+        
+        # Bind events
+        self.text_stats_frame.bind('<Configure>', on_frame_configure)
+        canvas.bind('<Configure>', on_canvas_configure)
         
         # Mouse wheel scrolling
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+            
+        def _on_shift_mousewheel(event):
+            canvas.xview_scroll(int(-1*(event.delta/120)), "units")
+        
+        # Bind mouse wheel to canvas and its children
+        def bind_mousewheel(widget):
+            widget.bind("<MouseWheel>", _on_mousewheel)
+            widget.bind("<Shift-MouseWheel>", _on_shift_mousewheel)
+            for child in widget.winfo_children():
+                bind_mousewheel(child)
+        
+        bind_mousewheel(canvas)
+        bind_mousewheel(self.text_stats_frame)
         
         # Default message
         default_label = tk.Label(self.text_stats_frame,
                                text="📈 Statisticile detaliate vor apărea aici după selectarea unei vizualizări.",
-                               font=('Segoe UI', 10),
+                               font=('Segoe UI', 9),
                                bg=self.colors['surface'],
                                fg=self.colors['muted'],
-                               wraplength=320,
                                justify=tk.CENTER)
-        default_label.pack(expand=True, pady=20)
+        default_label.pack(expand=True, pady=15)
             
     def update_calendar_marks(self):
         """Mark days with data in calendar"""
@@ -986,12 +1011,12 @@ class BinaryTrafficAnalyzerApp:
         # Display stats in scrollable text with smaller font
         stats_label = tk.Label(self.text_stats_frame,
                               text=stats_text,
-                              font=('Segoe UI', 9),
+                              font=('Segoe UI', 8),
                               bg=self.colors['surface'],
                               fg=self.colors['dark'],
                               justify=tk.LEFT,
                               anchor='nw')
-        stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
+        stats_label.pack(fill=tk.BOTH, padx=3, pady=3)
     
     def generate_modern_weekly_view(self, date, formatted_date):
         """Generate modern weekly view"""
