@@ -73,44 +73,64 @@ class HourlyVisualization(BaseVisualization):
         self.add_value_labels_to_bars(ax, bars2, all_values)
     
     def generate_stats(self, vehicule_mari, vehicule_mici, hours, formatted_date):
-        """Generate comprehensive hourly statistics"""
+        """Generează statistici orare cu subtitluri colorate, dar păstrează și metricile principale"""
         total_mari = sum(vehicule_mari)
         total_mici = sum(vehicule_mici)
         total = total_mari + total_mici
-        
+
         if total == 0:
             self.stats_panel.display_stats("Nu există date pentru această zi.")
             return
-        
-        # Calculate statistics
-        stats_text = f"""📊 STATISTICI {formatted_date}
 
-🚦 TOTALURI:
-    Total: {total:,} vehicule
-    Mari: {total_mari:,} ({(total_mari/total*100):.1f}%)
-    Mici: {total_mici:,} ({(total_mici/total*100):.1f}%)
+        # Clear existing stats
+        self.stats_panel.clear_stats()
 
-⏰ ORE DE VÂRF:"""
-        
+        metrics = (
+            f"Total vehicule: {total}\n"
+            f"Vehicule mici: {total_mici} ({(total_mici * 100 / total):.1f}%)\n"
+            f"Vehicule mari: {total_mari} ({(total_mari * 100 / total):.1f}%)"
+        )
+        self.stats_panel.add_stats_section(
+            "🔢 METRICI PRINCIPALE",
+            metrics,
+            self.colors['primary']
+        )
+
+        # Peak hours analysis (subtitlu colorat)
         if vehicule_mici and vehicule_mari:
             peak_hour_mici_idx = vehicule_mici.index(max(vehicule_mici))
             peak_hour_mari_idx = vehicule_mari.index(max(vehicule_mari))
             peak_hour_mici = hours[peak_hour_mici_idx]
             peak_hour_mari = hours[peak_hour_mari_idx]
-            
-            stats_text += f"""
-    🚗 Vehicule mici: {peak_hour_mici}:00 ({max(vehicule_mici)})
-    🚛 Vehicule mari: {peak_hour_mari}:00 ({max(vehicule_mari)})
-    📈 Medie: {total/len(hours):.1f}/oră
 
-📋 DISTRIBUȚIA ORARĂ:"""
-            
-            # Show only non-zero hours
-            for i, hour in enumerate(hours):
-                if i < len(vehicule_mari) and i < len(vehicule_mici):
-                    hour_total = vehicule_mari[i] + vehicule_mici[i]
-                    if hour_total > 0:
-                        stats_text += f"""
-    {hour}:00 → {vehicule_mari[i]} 🚛, {vehicule_mici[i]} 🚗 (total: {hour_total})"""
-        
-        self.stats_panel.display_stats(stats_text)
+            peak_analysis = (
+                f"🚗 Vehicule mici: {peak_hour_mici}:00 ({max(vehicule_mici)})\n"
+                f"🚛 Vehicule mari: {peak_hour_mari}:00 ({max(vehicule_mari)})\n"
+                f"📈 Medie: {total/len(hours):.1f}/oră"
+            )
+
+            self.stats_panel.add_stats_section(
+                "⏰ ORE DE VÂRF",
+                peak_analysis,
+                self.colors['warning']
+            )
+
+        # Hourly distribution - doar orele nenule (subtitlu colorat)
+        distribution_lines = []
+        for i, hour in enumerate(hours):
+            if i < len(vehicule_mari) and i < len(vehicule_mici):
+                hour_total = vehicule_mari[i] + vehicule_mici[i]
+                if hour_total > 0:
+                    distribution_lines.append(
+                        f"{hour}:00 → {vehicule_mari[i]} 🚛, {vehicule_mici[i]} 🚗 (total: {hour_total})"
+                    )
+
+        if distribution_lines:
+            self.stats_panel.add_stats_section(
+                "📋 DISTRIBUȚIA ORARĂ",
+                "\n".join(distribution_lines),
+                self.colors['info']
+            )
+
+        # Scroll to top for better visibility
+        self.stats_panel.scroll_to_top()

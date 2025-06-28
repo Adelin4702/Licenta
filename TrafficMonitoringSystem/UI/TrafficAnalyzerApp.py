@@ -48,11 +48,71 @@ class BinaryTrafficAnalyzerApp:
         self.db = TrafficDatabase('traffic_binary.db')
         self.dates_with_data = self.db.get_dates_with_data()
         
+        # Initialize filter data
+        self.cities_data = {}
+        self.locations_data = {}
+        self.cameras_data = {}
+        self.load_filter_data()
+        
         # Setup modern styling
         self.setup_styles()
         
         # Create GUI
         self.create_modern_gui()
+        
+    def load_filter_data(self):
+        """Load cities, locations and cameras data for filters"""
+        try:
+            # Get all cities
+            self.db.cursor.execute("SELECT id, city_name FROM city ORDER BY city_name")
+            cities = self.db.cursor.fetchall()
+            self.cities_data = {city[1]: city[0] for city in cities}
+            
+            # Get all locations grouped by city
+            self.db.cursor.execute("""
+                SELECT l.id, l.road_name, l.road_km, l.city_id, c.city_name 
+                FROM location l 
+                JOIN city c ON l.city_id = c.id 
+                ORDER BY c.city_name, l.road_name
+            """)
+            locations = self.db.cursor.fetchall()
+            
+            self.locations_data = {}
+            for loc in locations:
+                loc_id, road_name, road_km, city_id, city_name = loc
+                location_display = f"{road_name} (km {road_km})" if road_km else road_name
+                
+                if city_name not in self.locations_data:
+                    self.locations_data[city_name] = {}
+                self.locations_data[city_name][location_display] = loc_id
+            
+            # Get all cameras grouped by location and city
+            self.db.cursor.execute("""
+                SELECT cam.id, cam.model, l.road_name, l.road_km, c.city_name 
+                FROM camera cam
+                JOIN location l ON cam.location_id = l.id
+                JOIN city c ON l.city_id = c.id 
+                ORDER BY c.city_name, l.road_name, cam.model
+            """)
+            cameras = self.db.cursor.fetchall()
+            
+            self.cameras_data = {}
+            for cam in cameras:
+                cam_id, model, road_name, road_km, city_name = cam
+                location_display = f"{road_name} (km {road_km})" if road_km else road_name
+                camera_display = f"{model}"
+                
+                if city_name not in self.cameras_data:
+                    self.cameras_data[city_name] = {}
+                if location_display not in self.cameras_data[city_name]:
+                    self.cameras_data[city_name][location_display] = {}
+                self.cameras_data[city_name][location_display][camera_display] = cam_id
+                
+        except Exception as e:
+            print(f"Error loading filter data: {e}")
+            self.cities_data = {}
+            self.locations_data = {}
+            self.cameras_data = {}
         
     def setup_styles(self):
         """Configure modern ttk styles"""
@@ -71,21 +131,21 @@ class BinaryTrafficAnalyzerApp:
                            relief='solid')
         
     def create_modern_gui(self):
-        """Create modern, professional GUI"""
-        # Main container with padding
+        """Create modern, professional GUI optimized for 1200x800"""
+        # Main container with reduced padding
         main_frame = tk.Frame(self.root, bg=self.colors['background'])
-        main_frame.pack(fill=tk.BOTH, expand=True, padx=20, pady=20)
+        main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
         
         # Header section
         self.create_header(main_frame)
         
         # Content area
         content_frame = tk.Frame(main_frame, bg=self.colors['background'])
-        content_frame.pack(fill=tk.BOTH, expand=True, pady=(20, 0))
+        content_frame.pack(fill=tk.BOTH, expand=True, pady=(10, 0))
         
-        # Left panel (controls) - made smaller
-        left_panel = tk.Frame(content_frame, bg=self.colors['background'], width=320)
-        left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 15))
+        # Left panel (controls) - optimized width
+        left_panel = tk.Frame(content_frame, bg=self.colors['background'], width=280)
+        left_panel.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 10))
         left_panel.pack_propagate(False)
         
         # Right panel (visualization)
@@ -100,77 +160,409 @@ class BinaryTrafficAnalyzerApp:
         self.selected_date = datetime.datetime.now().strftime("%Y-%m-%d")
         
     def create_header(self, parent):
-        """Create modern header with gradient effect"""
-        header_frame = tk.Frame(parent, bg=self.colors['surface'], height=120)
+        """Create compact header"""
+        header_frame = tk.Frame(parent, bg=self.colors['surface'], height=60)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         # Add subtle shadow effect
-        shadow_frame = tk.Frame(parent, bg='#e2e8f0', height=2)
+        shadow_frame = tk.Frame(parent, bg='#e2e8f0', height=1)
         shadow_frame.pack(fill=tk.X)
         
         # Header content
         header_content = tk.Frame(header_frame, bg=self.colors['surface'])
-        header_content.pack(expand=True, fill=tk.BOTH, padx=40, pady=20)
+        header_content.pack(expand=True, fill=tk.BOTH, padx=20, pady=10)
         
-        # Title and subtitle
-        title_label = tk.Label(header_content, 
+        # Title and status in same line
+        title_status_frame = tk.Frame(header_content, bg=self.colors['surface'])
+        title_status_frame.pack(fill=tk.X)
+        
+        # Title on left
+        title_label = tk.Label(title_status_frame, 
                               text="🚗 Analizator Trafic Inteligent",
-                              font=('Segoe UI', 28, 'bold'),
+                              font=('Segoe UI', 18, 'bold'),
                               bg=self.colors['surface'],
                               fg=self.colors['primary'])
-        title_label.pack(anchor='w')
+        title_label.pack(side=tk.LEFT)
         
+        # Subtitle
         subtitle_label = tk.Label(header_content,
                                  text="Analiză avansată pentru vehicule mari și mici",
-                                 font=('Segoe UI', 14),
+                                 font=('Segoe UI', 11),
                                  bg=self.colors['surface'],
                                  fg=self.colors['secondary'])
-        subtitle_label.pack(anchor='w', pady=(5, 0))
-        
-        # Status indicator
-        status_frame = tk.Frame(header_content, bg=self.colors['surface'])
-        status_frame.pack(anchor='w', pady=(10, 0))
-        
-        status_dot = tk.Label(status_frame, text="●", 
-                             font=('Segoe UI', 12),
-                             fg=self.colors['success'],
-                             bg=self.colors['surface'])
-        status_dot.pack(side=tk.LEFT)
-        
-        status_text = tk.Label(status_frame, text=f"Conectat | {len(self.dates_with_data)} zile cu date",
-                              font=('Segoe UI', 11),
-                              bg=self.colors['surface'],
-                              fg=self.colors['muted'])
-        status_text.pack(side=tk.LEFT, padx=(5, 0))
+        subtitle_label.pack(anchor='w', pady=(2, 0))
         
     def create_control_panel(self, parent):
         """Create modern control panel"""
         # Calendar card
         self.create_calendar_card(parent)
         
+        # Filters card
+        self.create_filters_card(parent)
+        
         # Controls card
         self.create_controls_card(parent)
         
+    def create_filters_card(self, parent):
+        """Create compact filters card for city, location, camera selection"""
+        card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
+        card_frame.pack(fill=tk.X, pady=(0, 8))
+        
+        # Card header
+        header_frame = tk.Frame(card_frame, bg=self.colors['accent'], height=28)
+        header_frame.pack(fill=tk.X)
+        header_frame.pack_propagate(False)
+        
+        header_label = tk.Label(header_frame, text="🔍 Filtre",
+                               font=('Segoe UI', 10, 'bold'),
+                               bg=self.colors['accent'],
+                               fg='white')
+        header_label.pack(expand=True)
+        
+        # Filters content
+        filters_content = tk.Frame(card_frame, bg=self.colors['surface'])
+        filters_content.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
+        
+        # City filter
+        city_label = tk.Label(filters_content, text="Oraș:",
+                             font=('Segoe UI', 9, 'bold'),
+                             bg=self.colors['surface'],
+                             fg=self.colors['dark'])
+        city_label.pack(anchor='w', pady=(0, 2))
+        
+        city_values = ["Toate orașele"] + list(self.cities_data.keys())
+        self.city_filter = ttk.Combobox(filters_content, 
+                                       values=city_values,
+                                       state="readonly",
+                                       font=('Segoe UI', 8),
+                                       style='Modern.TCombobox')
+        self.city_filter.set("Toate orașele")
+        self.city_filter.pack(fill=tk.X, pady=(0, 6))
+        self.city_filter.bind("<<ComboboxSelected>>", self.on_city_change)
+        
+        # Location filter
+        location_label = tk.Label(filters_content, text="Locație:",
+                                 font=('Segoe UI', 9, 'bold'),
+                                 bg=self.colors['surface'],
+                                 fg=self.colors['dark'])
+        location_label.pack(anchor='w', pady=(0, 2))
+        
+        self.location_filter = ttk.Combobox(filters_content, 
+                                           values=["Toate locațiile"],
+                                           state="readonly",
+                                           font=('Segoe UI', 8),
+                                           style='Modern.TCombobox')
+        self.location_filter.set("Toate locațiile")
+        self.location_filter.pack(fill=tk.X, pady=(0, 6))
+        self.location_filter.bind("<<ComboboxSelected>>", self.on_location_change)
+        
+        # Camera filter
+        camera_label = tk.Label(filters_content, text="Cameră:",
+                               font=('Segoe UI', 9, 'bold'),
+                               bg=self.colors['surface'],
+                               fg=self.colors['dark'])
+        camera_label.pack(anchor='w', pady=(0, 2))
+        
+        self.camera_filter = ttk.Combobox(filters_content, 
+                                         values=["Toate camerele"],
+                                         state="readonly",
+                                         font=('Segoe UI', 8),
+                                         style='Modern.TCombobox')
+        self.camera_filter.set("Toate camerele")
+        self.camera_filter.pack(fill=tk.X, pady=(0, 6))
+        self.camera_filter.bind("<<ComboboxSelected>>", self.on_filter_change)
+        
+        # Reset filters button
+        reset_btn = tk.Button(filters_content, text="🔄 Reset",
+                             font=('Segoe UI', 8, 'bold'),
+                             bg=self.colors['secondary'],
+                             fg='white',
+                             relief='flat',
+                             padx=8, pady=4,
+                             cursor='hand2',
+                             command=self.reset_filters)
+        reset_btn.pack(fill=tk.X)
+        
+        # Hover effects for reset button
+        def on_enter(e):
+            reset_btn.configure(bg='#475569')
+        def on_leave(e):
+            reset_btn.configure(bg=self.colors['secondary'])
+            
+        reset_btn.bind("<Enter>", on_enter)
+        reset_btn.bind("<Leave>", on_leave)
+        
+    def on_city_change(self, event=None):
+        """Handle city filter change"""
+        selected_city = self.city_filter.get()
+        
+        if selected_city == "Toate orașele":
+            # Reset location and camera filters
+            self.location_filter['values'] = ["Toate locațiile"]
+            self.location_filter.set("Toate locațiile")
+            self.camera_filter['values'] = ["Toate camerele"]
+            self.camera_filter.set("Toate camerele")
+        else:
+            # Update location filter based on selected city
+            if selected_city in self.locations_data:
+                location_values = ["Toate locațiile"] + list(self.locations_data[selected_city].keys())
+                self.location_filter['values'] = location_values
+                self.location_filter.set("Toate locațiile")
+            else:
+                self.location_filter['values'] = ["Toate locațiile"]
+                self.location_filter.set("Toate locațiile")
+            
+            # Reset camera filter
+            self.camera_filter['values'] = ["Toate camerele"]
+            self.camera_filter.set("Toate camerele")
+        
+        self.on_filter_change()
+    
+    def on_location_change(self, event=None):
+        """Handle location filter change"""
+        selected_city = self.city_filter.get()
+        selected_location = self.location_filter.get()
+        
+        if selected_city == "Toate orașele" or selected_location == "Toate locațiile":
+            # Reset camera filter
+            self.camera_filter['values'] = ["Toate camerele"]
+            self.camera_filter.set("Toate camerele")
+        else:
+            # Update camera filter based on selected city and location
+            if (selected_city in self.cameras_data and 
+                selected_location in self.cameras_data[selected_city]):
+                camera_values = ["Toate camerele"] + list(self.cameras_data[selected_city][selected_location].keys())
+                self.camera_filter['values'] = camera_values
+                self.camera_filter.set("Toate camerele")
+            else:
+                self.camera_filter['values'] = ["Toate camerele"]
+                self.camera_filter.set("Toate camerele")
+        
+        self.on_filter_change()
+    
+    def on_filter_change(self, event=None):
+        """Handle any filter change and refresh visualization"""
+        self.generate_visualization()
+    
+    def reset_filters(self):
+        """Reset all filters to default values"""
+        self.city_filter.set("Toate orașele")
+        self.location_filter['values'] = ["Toate locațiile"]
+        self.location_filter.set("Toate locațiile")
+        self.camera_filter['values'] = ["Toate camerele"]
+        self.camera_filter.set("Toate camerele")
+        self.generate_visualization()
+    
+    def get_filter_conditions(self):
+        """Get SQL conditions based on current filter selections"""
+        conditions = []
+        params = []
+        
+        selected_city = self.city_filter.get()
+        selected_location = self.location_filter.get()
+        selected_camera = self.camera_filter.get()
+        
+        if selected_city != "Toate orașele":
+            if selected_city in self.cities_data:
+                city_id = self.cities_data[selected_city]
+                conditions.append("city.id = ?")
+                params.append(city_id)
+        
+        if selected_location != "Toate locațiile" and selected_city != "Toate orașele":
+            if (selected_city in self.locations_data and 
+                selected_location in self.locations_data[selected_city]):
+                location_id = self.locations_data[selected_city][selected_location]
+                conditions.append("l.id = ?")
+                params.append(location_id)
+        
+        if (selected_camera != "Toate camerele" and 
+            selected_city != "Toate orașele" and 
+            selected_location != "Toate locațiile"):
+            if (selected_city in self.cameras_data and 
+                selected_location in self.cameras_data[selected_city] and
+                selected_camera in self.cameras_data[selected_city][selected_location]):
+                camera_id = self.cameras_data[selected_city][selected_location][selected_camera]
+                conditions.append("c.id = ?")
+                params.append(camera_id)
+        
+        return conditions, params
+    
+    def get_filtered_hourly_data(self, date):
+        """Get hourly data with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT strftime('%H', r.timestamp) as hour,
+                       SUM(r.nr_of_large_vehicles) as large_vehicles,
+                       SUM(r.nr_of_small_vehicles) as small_vehicles
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE date(r.timestamp) = ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            base_query += '''
+                GROUP BY strftime('%H', r.timestamp)
+                ORDER BY hour
+            '''
+            
+            params.insert(0, date)  # Add date as first parameter
+            
+            self.db.cursor.execute(base_query, params)
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            print(f"Error getting filtered hourly data: {e}")
+            return []
+    
+    def get_filtered_daily_totals(self, date):
+        """Get daily totals with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT SUM(r.nr_of_large_vehicles) as total_large,
+                       SUM(r.nr_of_small_vehicles) as total_small
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE date(r.timestamp) = ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            params.insert(0, date)  # Add date as first parameter
+            
+            self.db.cursor.execute(base_query, params)
+            result = self.db.cursor.fetchone()
+            return (result[0] or 0, result[1] or 0)
+        except Exception as e:
+            print(f"Error getting filtered daily totals: {e}")
+            return (0, 0)
+    
+    def get_filtered_week_data_by_range(self, start_date, end_date):
+        """Get week data with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT date(r.timestamp) as day,
+                       SUM(r.nr_of_large_vehicles) as large_vehicles,
+                       SUM(r.nr_of_small_vehicles) as small_vehicles
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE date(r.timestamp) BETWEEN ? AND ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            base_query += '''
+                GROUP BY date(r.timestamp)
+                ORDER BY day
+            '''
+            
+            params.insert(0, start_date)  # Add start_date as first parameter
+            params.insert(1, end_date)    # Add end_date as second parameter
+            
+            self.db.cursor.execute(base_query, params)
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            print(f"Error getting filtered week data: {e}")
+            return []
+    
+    def get_filtered_monthly_trend(self, month):
+        """Get monthly trend with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT strftime('%H', r.timestamp) as hour,
+                       AVG(r.nr_of_large_vehicles) as avg_large,
+                       AVG(r.nr_of_small_vehicles) as avg_small
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE strftime('%Y-%m', r.timestamp) = ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            base_query += '''
+                GROUP BY strftime('%H', r.timestamp)
+                ORDER BY hour
+            '''
+            
+            params.insert(0, month)  # Add month as first parameter
+            
+            self.db.cursor.execute(base_query, params)
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            print(f"Error getting filtered monthly trend: {e}")
+            return []
+    
+    def get_filtered_peak_hours_data(self, date):
+        """Get peak hours data with filters applied"""
+        try:
+            conditions, params = self.get_filter_conditions()
+            
+            base_query = '''
+                SELECT strftime('%H', r.timestamp) as hour,
+                       SUM(r.nr_of_large_vehicles) as large_vehicles,
+                       SUM(r.nr_of_small_vehicles) as small_vehicles
+                FROM record r
+                JOIN camera c ON r.camera_id = c.id
+                JOIN location l ON c.location_id = l.id
+                JOIN city ON l.city_id = city.id
+                WHERE date(r.timestamp) = ?
+            '''
+            
+            if conditions:
+                base_query += " AND " + " AND ".join(conditions)
+            
+            base_query += '''
+                GROUP BY strftime('%H', r.timestamp)
+                ORDER BY hour
+            '''
+            
+            params.insert(0, date)  # Add date as first parameter
+            
+            self.db.cursor.execute(base_query, params)
+            return self.db.cursor.fetchall()
+        except Exception as e:
+            print(f"Error getting filtered peak hours data: {e}")
+            return []
+    
     def create_calendar_card(self, parent):
         """Create compact calendar card"""
         card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        card_frame.pack(fill=tk.X, pady=(0, 15))
+        card_frame.pack(fill=tk.X, pady=(0, 8))
         
         # Compact card header
-        header_frame = tk.Frame(card_frame, bg=self.colors['primary'], height=35)
+        header_frame = tk.Frame(card_frame, bg=self.colors['primary'], height=28)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         header_label = tk.Label(header_frame, text="📅 Data",
-                               font=('Segoe UI', 12, 'bold'),
+                               font=('Segoe UI', 10, 'bold'),
                                bg=self.colors['primary'],
                                fg='white')
         header_label.pack(expand=True)
         
         # Calendar content - more compact
         calendar_content = tk.Frame(card_frame, bg=self.colors['surface'])
-        calendar_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        calendar_content.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
         # Smaller calendar widget
         self.calendar = Calendar(
@@ -191,9 +583,9 @@ class BinaryTrafficAnalyzerApp:
             normalforeground=self.colors['dark'],
             weekendbackground=self.colors['surface'],
             weekendforeground=self.colors['muted'],
-            font=('Segoe UI', 8)  # Smaller font
+            font=('Segoe UI', 7)  # Even smaller font
         )
-        self.calendar.pack(pady=5)
+        self.calendar.pack(pady=2)
         
         self.update_calendar_marks()
         self.calendar.bind("<<CalendarSelected>>", self.on_date_select)
@@ -201,29 +593,29 @@ class BinaryTrafficAnalyzerApp:
     def create_controls_card(self, parent):
         """Create compact controls card"""
         card_frame = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
-        card_frame.pack(fill=tk.X, pady=(0, 15))
+        card_frame.pack(fill=tk.X, pady=(0, 8))
         
         # Compact card header
-        header_frame = tk.Frame(card_frame, bg=self.colors['info'], height=35)
+        header_frame = tk.Frame(card_frame, bg=self.colors['info'], height=28)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         header_label = tk.Label(header_frame, text="⚙️ Opțiuni",
-                               font=('Segoe UI', 12, 'bold'),
+                               font=('Segoe UI', 10, 'bold'),
                                bg=self.colors['info'],
                                fg='white')
         header_label.pack(expand=True)
         
         # Controls content - more compact
         controls_content = tk.Frame(card_frame, bg=self.colors['surface'])
-        controls_content.pack(fill=tk.BOTH, expand=True, padx=15, pady=15)
+        controls_content.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
         # View type selector with compact styling
         view_label = tk.Label(controls_content, text="Tip vizualizare:",
-                             font=('Segoe UI', 10, 'bold'),
+                             font=('Segoe UI', 9, 'bold'),
                              bg=self.colors['surface'],
                              fg=self.colors['dark'])
-        view_label.pack(anchor='w', pady=(0, 5))
+        view_label.pack(anchor='w', pady=(0, 2))
         
         self.view_type = ttk.Combobox(controls_content, 
                                      values=[
@@ -234,10 +626,10 @@ class BinaryTrafficAnalyzerApp:
                                          "📅 Tendință lunară"
                                      ],
                                      state="readonly",
-                                     font=('Segoe UI', 10),
+                                     font=('Segoe UI', 8),
                                      style='Modern.TCombobox')
         self.view_type.set("📊 Trafic orar")
-        self.view_type.pack(fill=tk.X, pady=(0, 15))
+        self.view_type.pack(fill=tk.X, pady=(0, 8))
         self.view_type.bind("<<ComboboxSelected>>", self.generate_visualization)
         
         # Compact action buttons
@@ -245,21 +637,21 @@ class BinaryTrafficAnalyzerApp:
         button_frame.pack(fill=tk.X)
         
         generate_btn = tk.Button(button_frame, text="🔄 Actualizează",
-                               font=('Segoe UI', 10, 'bold'),
+                               font=('Segoe UI', 8, 'bold'),
                                bg=self.colors['primary'],
                                fg='white',
                                relief='flat',
-                               padx=15, pady=8,
+                               padx=8, pady=4,
                                cursor='hand2',
                                command=self.generate_visualization)
-        generate_btn.pack(fill=tk.X, pady=(0, 8))
+        generate_btn.pack(fill=tk.X, pady=(0, 4))
         
         test_data_btn = tk.Button(button_frame, text="🔧 Date Test",
-                                font=('Segoe UI', 10, 'bold'),
+                                font=('Segoe UI', 8, 'bold'),
                                 bg=self.colors['success'],
                                 fg='white',
                                 relief='flat',
-                                padx=15, pady=8,
+                                padx=8, pady=4,
                                 cursor='hand2',
                                 command=self.add_test_data)
         test_data_btn.pack(fill=tk.X)
@@ -276,93 +668,129 @@ class BinaryTrafficAnalyzerApp:
         test_data_btn.bind("<Leave>", lambda e: on_leave(e, test_data_btn, self.colors['success']))
         
     def create_visualization_panel(self, parent):
-        """Create visualization panel with optimized layout"""
+        """Create visualization panel optimized for 1200x800"""
         # Main visualization card
         viz_card = tk.Frame(parent, bg=self.colors['surface'], relief='solid', bd=1)
         viz_card.pack(fill=tk.BOTH, expand=True)
         
         # Card header
-        header_frame = tk.Frame(viz_card, bg=self.colors['dark'], height=50)
+        header_frame = tk.Frame(viz_card, bg=self.colors['dark'], height=35)
         header_frame.pack(fill=tk.X)
         header_frame.pack_propagate(False)
         
         self.viz_title = tk.Label(header_frame, text="📈 Vizualizare Trafic",
-                                 font=('Segoe UI', 14, 'bold'),
+                                 font=('Segoe UI', 12, 'bold'),
                                  bg=self.colors['dark'],
                                  fg='white')
         self.viz_title.pack(expand=True)
         
         # Content container with horizontal split
         content_container = tk.Frame(viz_card, bg=self.colors['surface'])
-        content_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        content_container.pack(fill=tk.BOTH, expand=True, padx=8, pady=8)
         
-        # Graph area - takes 70% of width
+        # Graph area - takes most of the width
         self.graph_frame = tk.Frame(content_container, bg=self.colors['light'])
         self.graph_frame.pack(side=tk.LEFT, fill=tk.BOTH, expand=True, padx=(0, 0))
         
         # Initial placeholder
         placeholder_label = tk.Label(self.graph_frame,
                                     text="🎯\nSelectează o opțiune de vizualizare\npentru a începe analiza",
-                                    font=('Segoe UI', 14),
+                                    font=('Segoe UI', 12),
                                     bg=self.colors['light'],
                                     fg=self.colors['muted'],
                                     justify=tk.CENTER)
         placeholder_label.pack(expand=True)
         
-        # Text-based stats area - takes 30% of width
+        # Text-based stats area - compact for 1200x800
         self.create_compact_stats_panel(content_container)
         
     def create_compact_stats_panel(self, parent):
         """Create compact stats panel on the right side"""
-        # Stats frame with fixed width - 30% of space
-        stats_container = tk.Frame(parent, bg=self.colors['surface'], width=250)
+        # Stats frame with fixed width - optimized for 1200x800
+        stats_container = tk.Frame(parent, bg=self.colors['surface'], width=200)
         stats_container.pack(side=tk.RIGHT, fill=tk.Y, padx=(5, 0))
         stats_container.pack_propagate(False)
         
         # Stats header
-        stats_header = tk.Frame(stats_container, bg=self.colors['primary'], height=35)
+        stats_header = tk.Frame(stats_container, bg=self.colors['primary'], height=28)
         stats_header.pack(fill=tk.X)
         stats_header.pack_propagate(False)
         
         tk.Label(stats_header, text="📊 Statistici",
-                font=('Segoe UI', 12, 'bold'),
+                font=('Segoe UI', 10, 'bold'),
                 bg=self.colors['primary'],
                 fg='white').pack(expand=True)
         
-        # Scrollable stats content
-        canvas = tk.Canvas(stats_container, bg=self.colors['surface'], highlightthickness=0)
-        scrollbar = ttk.Scrollbar(stats_container, orient="vertical", command=canvas.yview)
+        # Create frame for scrollbars and canvas
+        scroll_frame = tk.Frame(stats_container, bg=self.colors['surface'])
+        scroll_frame.pack(fill="both", expand=True, padx=3, pady=3)
         
-        scrollbar.pack(side="right", fill="y")
-        canvas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        # Create canvas and scrollbars
+        canvas = tk.Canvas(scroll_frame, bg=self.colors['surface'], highlightthickness=0)
+        v_scrollbar = ttk.Scrollbar(scroll_frame, orient="vertical", command=canvas.yview)
+        h_scrollbar = ttk.Scrollbar(scroll_frame, orient="horizontal", command=canvas.xview)
         
-        canvas.configure(yscrollcommand=scrollbar.set)
-        
-        # Text stats container
+        # Create scrollable frame
         self.text_stats_frame = tk.Frame(canvas, bg=self.colors['surface'])
+        
+        # Configure scrollbars
+        canvas.configure(yscrollcommand=v_scrollbar.set, xscrollcommand=h_scrollbar.set)
+        
+        # Grid layout for proper scrollbar positioning
+        canvas.grid(row=0, column=0, sticky="nsew")
+        v_scrollbar.grid(row=0, column=1, sticky="ns")
+        h_scrollbar.grid(row=1, column=0, sticky="ew")
+        
+        # Configure grid weights
+        scroll_frame.grid_rowconfigure(0, weight=1)
+        scroll_frame.grid_columnconfigure(0, weight=1)
+        
+        # Create window in canvas
         canvas_window = canvas.create_window((0, 0), window=self.text_stats_frame, anchor="nw")
         
-        def configure_scroll(event):
+        # Update scroll region when frame size changes
+        def on_frame_configure(event):
             canvas.configure(scrollregion=canvas.bbox("all"))
-            canvas.itemconfig(canvas_window, width=event.width)
-            
-        canvas.bind('<Configure>', configure_scroll)
-        self.text_stats_frame.bind('<Configure>', lambda e: canvas.configure(scrollregion=canvas.bbox("all")))
+        
+        # Update canvas window size when canvas size changes
+        def on_canvas_configure(event):
+            # Get the current size of the text frame
+            canvas.update_idletasks()
+            bbox = canvas.bbox("all")
+            if bbox:
+                # Set minimum width to canvas width, but allow frame to be wider
+                frame_width = max(bbox[2], event.width - v_scrollbar.winfo_width())
+                canvas.itemconfig(canvas_window, width=frame_width)
+        
+        # Bind events
+        self.text_stats_frame.bind('<Configure>', on_frame_configure)
+        canvas.bind('<Configure>', on_canvas_configure)
         
         # Mouse wheel scrolling
         def _on_mousewheel(event):
             canvas.yview_scroll(int(-1*(event.delta/120)), "units")
-        canvas.bind_all("<MouseWheel>", _on_mousewheel)
+            
+        def _on_shift_mousewheel(event):
+            canvas.xview_scroll(int(-1*(event.delta/120)), "units")
+        
+        # Bind mouse wheel to canvas and its children
+        def bind_mousewheel(widget):
+            widget.bind("<MouseWheel>", _on_mousewheel)
+            widget.bind("<Shift-MouseWheel>", _on_shift_mousewheel)
+            for child in widget.winfo_children():
+                bind_mousewheel(child)
+        
+        bind_mousewheel(canvas)
+        bind_mousewheel(self.text_stats_frame)
         
         # Default message
         default_label = tk.Label(self.text_stats_frame,
                                text="📈 Statisticile detaliate vor apărea aici după selectarea unei vizualizări.",
-                               font=('Segoe UI', 10),
+                               font=('Segoe UI', 9),
                                bg=self.colors['surface'],
                                fg=self.colors['muted'],
-                               wraplength=320,
                                justify=tk.CENTER)
-        default_label.pack(expand=True, pady=20)
+        default_label.pack(expand=True, pady=15)
             
     def update_calendar_marks(self):
         """Mark days with data in calendar"""
@@ -397,6 +825,28 @@ class BinaryTrafficAnalyzerApp:
         except Exception:
             return date_str
         
+    def get_filter_description(self):
+        """Get description of current filters for display in titles"""
+        parts = []
+        
+        selected_city = self.city_filter.get()
+        selected_location = self.location_filter.get()
+        selected_camera = self.camera_filter.get()
+        
+        if selected_city != "Toate orașele":
+            parts.append(f"Oraș: {selected_city}")
+            
+        if selected_location != "Toate locațiile":
+            parts.append(f"Locație: {selected_location}")
+            
+        if selected_camera != "Toate camerele":
+            parts.append(f"Cameră: {selected_camera}")
+        
+        if parts:
+            return " | " + " | ".join(parts)
+        else:
+            return " | Toate datele"
+        
     def generate_visualization(self, event=None):
         """Generate selected visualization with modern styling"""
         # Clear existing content
@@ -408,7 +858,8 @@ class BinaryTrafficAnalyzerApp:
         view_type = self.view_type.get()
         date = self.selected_date
         formatted_date = self.format_date(date)
-        self.viz_title.configure(text=f"{view_type}")
+        filter_desc = self.get_filter_description()
+        self.viz_title.configure(text=f"{view_type}{filter_desc}")
         
         if "Trafic orar" in view_type:
             self.generate_modern_hourly_view(date, formatted_date)
@@ -436,7 +887,7 @@ class BinaryTrafficAnalyzerApp:
         
     def generate_modern_hourly_view(self, date, formatted_date):
         """Generate modern hourly view"""
-        data = self.db.get_hourly_data(date)
+        data = self.get_filtered_hourly_data(date)
         
         if not data:
             self.show_no_data_message()
@@ -560,14 +1011,12 @@ class BinaryTrafficAnalyzerApp:
         # Display stats in scrollable text with smaller font
         stats_label = tk.Label(self.text_stats_frame,
                               text=stats_text,
-                              font=('Segoe UI', 9),
+                              font=('Segoe UI', 8),
                               bg=self.colors['surface'],
                               fg=self.colors['dark'],
                               justify=tk.LEFT,
                               anchor='nw')
-        stats_label.pack(fill=tk.BOTH, padx=5, pady=5)
-    
-
+        stats_label.pack(fill=tk.BOTH, padx=3, pady=3)
     
     def generate_modern_weekly_view(self, date, formatted_date):
         """Generate modern weekly view"""
@@ -576,7 +1025,7 @@ class BinaryTrafficAnalyzerApp:
         week_start = selected_date - datetime.timedelta(days=days_since_monday)
         week_end = week_start + datetime.timedelta(days=6)
         
-        data = self.db.get_week_data_by_range(week_start.strftime("%Y-%m-%d"), week_end.strftime("%Y-%m-%d"))
+        data = self.get_filtered_week_data_by_range(week_start.strftime("%Y-%m-%d"), week_end.strftime("%Y-%m-%d"))
         
         if not data:
             self.show_no_data_message(f"Nu există date pentru săptămâna {week_start.strftime('%d/%m')} - {week_end.strftime('%d/%m/%Y')}")
@@ -712,7 +1161,7 @@ class BinaryTrafficAnalyzerApp:
     
     def generate_modern_monthly_trend(self, date, formatted_date):
         """Generate modern monthly trend view"""
-        data = self.db.get_monthly_trend(date[:7])
+        data = self.get_filtered_monthly_trend(date[:7])
         
         if not data:
             self.show_no_data_message("Nu există date pentru luna selectată!")
@@ -822,7 +1271,7 @@ LUNA {date_to_print}
     
     def generate_modern_percentage_distribution(self, date, formatted_date):
         """Generate modern percentage distribution"""
-        data = self.db.get_daily_totals(date)
+        data = self.get_filtered_daily_totals(date)
         
         if not data:
             self.show_no_data_message()
@@ -925,7 +1374,7 @@ LUNA {date_to_print}
     
     def generate_modern_peak_hours_comparison(self, date, formatted_date):
         """Generate modern peak hours comparison"""
-        peak_data = self.db.get_peak_hours_data(date)
+        peak_data = self.get_filtered_peak_hours_data(date)
         
         if not peak_data:
             self.show_no_data_message("Nu există date pentru analiza orelor de vârf!")
