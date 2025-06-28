@@ -10,12 +10,8 @@ from torchvision import transforms as T
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 import torchvision.models.detection as detection
 from sort.class_aware_sort import ClassAwareSort  # Import SORT tracker
-from roadWidth import get_max_road_width_y
+
 import datetime
-import torch.nn as nn
-from torchvision.models.detection import FasterRCNN
-from torchvision.models.detection.rpn import AnchorGenerator
-from torchvision import models
 import argparse
 from db_functions import TrafficDatabase, get_next_hour_timestamp
 
@@ -28,7 +24,7 @@ def get_least_used_gpu():
         free_memory = [int(x) for x in result.stdout.strip().split("\n")]
         return str(free_memory.index(max(free_memory)))
     except Exception:
-        return "0"  # Default to first GPU if there's an issue
+        return "0"
 
 
 os.environ["CUDA_VISIBLE_DEVICES"] = get_least_used_gpu()
@@ -148,15 +144,14 @@ def track(video_path, model_path=None, camera_id=1, binary_classification=True):
 
     # Use provided model path or default
     if model_path is None:
-        model_path = "/mnt/QNAP/apricop/container/Experiment12/outputs/models/final_model_binary_epoch_15_map_0.8302.pth"
+        model_path = "D:\\Users\\Public\\Licenta\\Documentatie\\Cod\\TrafficMonitoringSystem\\Model\\final_model_binary_epoch_15_map_0.8302.pth"
 
     # Determine number of classes
     num_classes = 3 if binary_classification else 5  # background + 2 or 4 vehicle classes
 
     model = load_model(model_path, num_classes, binary_classification)
-    
-    # Use standard SORT tracker - now supports class labels
-    # tracker = ClassAwareSort(max_age=1, min_hits=1)  #PENTRU SIMULARE LIPSA TRACKER SI CALCUL IOU FRAME CU FRAME
+
+    # tracker = ClassAwareSort(max_age=1, min_hits=1)  #FOR NO-TRACKER SIMULATION AND SIMPLY COMPUTE IoU FRAME BY FRAME
     tracker = ClassAwareSort()
 
     # Dictionary to store tracking history (for drawing lines)

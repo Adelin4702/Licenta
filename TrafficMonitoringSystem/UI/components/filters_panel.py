@@ -3,7 +3,7 @@ Filters panel component for Traffic Analyzer App - Database Filters
 """
 import tkinter as tk
 from tkinter import ttk
-from ..utils.constants import CARD_HEADER_HEIGHT, FONT_SIZES
+from utils.constants import CARD_HEADER_HEIGHT, FONT_SIZES
 
 class FiltersPanelComponent:
     """Database filters panel for cities, locations, and cameras"""

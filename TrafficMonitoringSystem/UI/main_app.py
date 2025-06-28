@@ -16,21 +16,24 @@ import os
 project_root = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, project_root)
 
-from UI.styles.modern_styles import ModernStyles
-from UI.components.header import HeaderComponent
-from UI.components.calendar_panel import CalendarPanelComponent
-from UI.components.controls_panel import ControlsPanelComponent
-from UI.components.stats_panel import StatsPanelComponent
-from UI.components.filters_panel import FiltersPanelComponent
-from UI.visualization.hourly_viz import HourlyVisualization
-from UI.visualization.weekly_viz import WeeklyVisualization
-from UI.visualization.monthly_viz import MonthlyVisualization
-from UI.visualization.distribution_viz import DistributionVisualization
-from UI.visualization.peak_hours_viz import PeakHoursVisualization
-from UI.utils.date_utils import DateUtils
-from UI.utils.constants import *
+from styles.modern_styles import ModernStyles
+from components.calendar_panel import CalendarPanelComponent
+from components.controls_panel import ControlsPanelComponent
+from components.stats_panel import StatsPanelComponent
+from components.filters_panel import FiltersPanelComponent
+from visualization.hourly_viz import HourlyVisualization
+from visualization.weekly_viz import WeeklyVisualization
+from visualization.monthly_viz import MonthlyVisualization
+from visualization.distribution_viz import DistributionVisualization
+from visualization.peak_hours_viz import PeakHoursVisualization
+from utils.date_utils import DateUtils
+from utils.constants import *
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 from MonitoringApp.db_functions import TrafficDatabase
-from UI.visualization.yearly_viz import YearlyVisualization 
+
+from visualization.yearly_viz import YearlyVisualization 
 
 class TrafficAnalyzerApp:
     """Main application class for Traffic Analyzer with ALL DATABASE FILTERS"""

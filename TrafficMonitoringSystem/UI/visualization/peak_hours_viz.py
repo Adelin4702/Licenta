@@ -3,7 +3,7 @@ Peak hours visualization for Traffic Analyzer App
 """
 import numpy as np
 from .base_viz import BaseVisualization
-from UI.utils.constants import PEAK_HOURS, CHART_CONFIG, MESSAGES
+from utils.constants import PEAK_HOURS, CHART_CONFIG, MESSAGES
 
 class PeakHoursVisualization(BaseVisualization):
     """Peak hours comparison visualization with bar charts"""
@@ -112,5 +112,3 @@ class PeakHoursVisualization(BaseVisualization):
             title_color=self.colors['success']
         )
         
-        self.stats_panel.text_stats_frame.update_idletasks()
-        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))

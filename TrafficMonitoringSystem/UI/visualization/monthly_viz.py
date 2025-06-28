@@ -2,8 +2,8 @@
 Monthly visualization for Traffic Analyzer App
 """
 from .base_viz import BaseVisualization
-from UI.utils.date_utils import DateUtils
-from UI.utils.constants import MESSAGES
+from utils.date_utils import DateUtils
+from utils.constants import MESSAGES
 
 class MonthlyVisualization(BaseVisualization):
     """Monthly trend visualization with proper area charts"""
@@ -77,8 +77,8 @@ class MonthlyVisualization(BaseVisualization):
         total = total_mari + total_mici
         
         # Calculate average per hour across the month
-        avg_mari_per_hour = total_mari / len(avg_mari) if avg_mari else 0
-        avg_mici_per_hour = total_mici / len(avg_mici) if avg_mici else 0
+        avg_mari_per_hour = total_mari / (24*30)
+        avg_mici_per_hour = total_mici / (24*30)
         
         # Find peak hours (safely)
         peak_mari_idx = avg_mari.index(max(avg_mari)) if avg_mari and max(avg_mari) > 0 else 0
@@ -122,5 +122,3 @@ class MonthlyVisualization(BaseVisualization):
             title_color=self.colors['info']
         )
         
-        self.stats_panel.text_stats_frame.update_idletasks()
-        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))

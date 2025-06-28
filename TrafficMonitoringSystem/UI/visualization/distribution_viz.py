@@ -107,20 +107,9 @@ class DistributionVisualization(BaseVisualization):
             insights,
             self.colors['info']
         )
-        
-        self.stats_panel.add_divider()
-
-        recommendations = self._generate_recommendations(percent_mari, percent_mici, total)
-        self.stats_panel.add_stats_section(
-            "📋 RECOMANDĂRI",
-            recommendations,
-            self.colors['accent']
-        )
-        
-        self.stats_panel.text_stats_frame.update_idletasks()
-        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))
 
         self.stats_panel.scroll_to_top()
+        
 
     def _generate_traffic_insights(self, percent_mari, percent_mici, total):
         """Generate intelligent traffic analysis insights"""
@@ -129,15 +118,12 @@ class DistributionVisualization(BaseVisualization):
         if percent_mari > 60:
             insights.append("🚛 Dominanță vehicule mari")
             insights.append("Tipul: Transport comercial")
-            insights.append("Zona: Probabil industrială/logistică")
         elif percent_mici > 70:
             insights.append("🚗 Dominanță vehicule mici")
             insights.append("Tipul: Trafic personal")
-            insights.append("Zona: Probabil rezidențială/urbană")
         else:
             insights.append("⚖️ Distribuție echilibrată")
             insights.append("Tipul: Trafic mixt")
-            insights.append("Zona: Arteră principală")
 
         if total > 1000:
             insights.append("📈 Trafic intens")
@@ -147,29 +133,3 @@ class DistributionVisualization(BaseVisualization):
             insights.append("📉 Trafic redus")
 
         return "\n".join(f"• {insight}" for insight in insights)
-
-    def _generate_recommendations(self, percent_mari, percent_mici, total):
-        """Generate actionable recommendations based on traffic distribution"""
-        recommendations = []
-
-        if percent_mari > 60:
-            recommendations.append("Considerați benzi dedicate pentru camioane")
-            recommendations.append("Implementați restricții de oră pentru vehicule mari")
-            recommendations.append("Monitorizați uzura drumului")
-        elif percent_mici > 70:
-            recommendations.append("Optimizați semaforele pentru fluiditate")
-            recommendations.append("Considerați piste pentru biciclete")
-            recommendations.append("Implementați zone cu viteză redusă")
-
-        if total > 1000:
-            recommendations.append("Evaluați necesitatea unor benzi suplimentare")
-            recommendations.append("Implementați sisteme de management trafic")
-        elif total < 200:
-            recommendations.append("Verificați necesitatea semaforului")
-            recommendations.append("Considerați sens giratoriu")
-
-        if not recommendations:
-            recommendations.append("Monitorizați în continuare traficul")
-            recommendations.append("Colectați date pe perioade mai lungi")
-
-        return "\n".join(f"• {rec}" for rec in recommendations)

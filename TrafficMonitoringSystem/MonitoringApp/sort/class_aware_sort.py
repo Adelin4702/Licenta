@@ -9,24 +9,11 @@ class ClassAwareSort(Sort):
     def __init__(self, max_age=30, min_hits=3, iou_threshold=0.3):
         """
         Initialize ClassAwareSort with the same parameters as SORT
-        
-        Args:
-            max_age: Maximum number of frames to keep track alive without detection
-            min_hits: Minimum number of hits to confirm a track
-            iou_threshold: IoU threshold for detection-track association
         """
         super().__init__(max_age, min_hits, iou_threshold)
         self.track_labels = {}  # Maps track ID to class label
     
     def compute_iou(self, box1, box2):
-        """
-        Compute IoU between two boxes
-        
-        Args:
-            box1, box2: [x1, y1, x2, y2] format
-        Returns:
-            IoU score (0-1)
-        """
         # Determine intersection coordinates
         x1 = max(box1[0], box2[0])
         y1 = max(box1[1], box2[1])
@@ -96,9 +83,7 @@ class ClassAwareSort(Sort):
         result = []
         for track in tracks:
             track_id = int(track[4])
-            # Get class label (default to 0/background if not found)
             label = self.track_labels.get(track_id, 0)
-            # Add label as the 6th column
             result.append(np.append(track, label))
         
         return np.array(result) if len(result) > 0 else np.empty((0, 6))

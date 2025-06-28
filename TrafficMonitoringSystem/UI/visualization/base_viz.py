@@ -3,7 +3,7 @@ Base visualization class for Traffic Analyzer App
 """
 import tkinter as tk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
-from UI.utils.constants import MESSAGES
+from utils.constants import MESSAGES
 
 class BaseVisualization:
     """Base class for all visualizations with common functionality"""

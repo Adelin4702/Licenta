@@ -4,8 +4,8 @@ Calendar panel component for Traffic Analyzer App
 import tkinter as tk
 import datetime
 from tkcalendar import Calendar
-from UI.utils.constants import CARD_HEADER_HEIGHT, FONT_SIZES
-from UI.utils.date_utils import DateUtils
+from utils.constants import FONT_SIZES
+from utils.date_utils import DateUtils
 
 class CalendarPanelComponent:
     """Calendar widget with date selection functionality"""

@@ -4,8 +4,8 @@ Yearly visualization for Traffic Analyzer App
 import numpy as np
 import datetime
 from .base_viz import BaseVisualization
-from UI.utils.date_utils import DateUtils
-from UI.utils.constants import CHART_CONFIG, MESSAGES
+from utils.date_utils import DateUtils
+from utils.constants import CHART_CONFIG, MESSAGES
 
 class YearlyVisualization(BaseVisualization):
     """Yearly traffic visualization with monthly progression"""
@@ -240,8 +240,8 @@ class YearlyVisualization(BaseVisualization):
             title_color=self.colors['info']
         )
         
-        self.stats_panel.text_stats_frame.update_idletasks()
-        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))
+        self.stats_panel.scroll_to_top()
+        
     
     def _analyze_growth_trend(self, monthly_totals, months):
         """Analyze growth trend throughout the year"""

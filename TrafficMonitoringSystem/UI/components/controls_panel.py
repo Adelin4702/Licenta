@@ -3,7 +3,7 @@ Controls panel component for Traffic Analyzer App
 """
 import tkinter as tk
 from tkinter import ttk, messagebox
-from UI.utils.constants import VISUALIZATION_OPTIONS, CARD_HEADER_HEIGHT, FONT_SIZES
+from utils.constants import VISUALIZATION_OPTIONS, CARD_HEADER_HEIGHT, FONT_SIZES
 
 class ControlsPanelComponent:
     """Controls panel with visualization options and action buttons"""

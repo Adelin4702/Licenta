@@ -2,7 +2,7 @@
 Header component for Traffic Analyzer App
 """
 import tkinter as tk
-from UI.utils.constants import APP_TITLE, APP_SUBTITLE, HEADER_HEIGHT, FONT_SIZES
+from utils.constants import APP_TITLE, APP_SUBTITLE, HEADER_HEIGHT, FONT_SIZES
 
 class HeaderComponent:
     """Modern header component with title and status"""

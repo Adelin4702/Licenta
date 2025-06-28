@@ -3,8 +3,8 @@ Hourly visualization for Traffic Analyzer App
 """
 import numpy as np
 from .base_viz import BaseVisualization
-from UI.utils.date_utils import DateUtils
-from UI.utils.constants import CHART_CONFIG
+from utils.date_utils import DateUtils
+from utils.constants import CHART_CONFIG
 
 class HourlyVisualization(BaseVisualization):
     """Hourly traffic visualization with bar charts"""
@@ -106,7 +106,7 @@ class HourlyVisualization(BaseVisualization):
             peak_analysis = (
                 f"🚗 Vehicule mici: {peak_hour_mici}:00 ({max(vehicule_mici)})\n"
                 f"🚛 Vehicule mari: {peak_hour_mari}:00 ({max(vehicule_mari)})\n"
-                f"📈 Medie: {total/len(hours):.1f}/oră"
+                f"📈 Medie: {total/24:.1f}/oră"
             )
             self.stats_panel.add_divider()
             
@@ -135,8 +135,5 @@ class HourlyVisualization(BaseVisualization):
                 self.colors['info']
             )
 
-        self.stats_panel.text_stats_frame.update_idletasks()
-        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))
-        
         # Scroll to top for better visibility
         self.stats_panel.scroll_to_top()

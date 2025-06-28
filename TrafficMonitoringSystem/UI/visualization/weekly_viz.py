@@ -3,8 +3,8 @@ Weekly visualization for Traffic Analyzer App
 """
 import datetime
 from .base_viz import BaseVisualization
-from UI.utils.date_utils import DateUtils
-from UI.utils.constants import CHART_CONFIG, MESSAGES
+from utils.date_utils import DateUtils
+from utils.constants import CHART_CONFIG, MESSAGES
 
 class WeeklyVisualization(BaseVisualization):
     """Weekly traffic visualization with line charts"""
@@ -162,5 +162,3 @@ class WeeklyVisualization(BaseVisualization):
             title_color=self.colors['info']
         )
         
-        self.stats_panel.text_stats_frame.update_idletasks()
-        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))

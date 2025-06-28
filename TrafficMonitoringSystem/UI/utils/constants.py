@@ -6,7 +6,7 @@ Constants and configuration for Traffic Analyzer App
 APP_TITLE = "🚗 Analizator Trafic Inteligent"
 APP_SUBTITLE = "Analiză avansată pentru vehicule mari și mici"
 MIN_WINDOW_SIZE = (1200, 800)
-DATABASE_NAME = '../traffic_binary.db'
+DATABASE_NAME = '../traffic_binary1.db'
 
 # UI Configuration
 HEADER_HEIGHT = 120
