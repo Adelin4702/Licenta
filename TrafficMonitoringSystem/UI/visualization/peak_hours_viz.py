@@ -111,3 +111,6 @@ class PeakHoursVisualization(BaseVisualization):
             content=f"Ore de vârf: {peak_mici:,} ({(peak_mici/total_peak*100) if total_peak > 0 else 0:.1f}%)\nOre normale: {normal_mici:,} ({(normal_mici/total_normal*100) if total_normal > 0 else 0:.1f}%)",
             title_color=self.colors['success']
         )
+        
+        self.stats_panel.text_stats_frame.update_idletasks()
+        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))

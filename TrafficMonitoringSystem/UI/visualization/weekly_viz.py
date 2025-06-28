@@ -161,3 +161,6 @@ class WeeklyVisualization(BaseVisualization):
             content=daily_content.strip(),
             title_color=self.colors['info']
         )
+        
+        self.stats_panel.text_stats_frame.update_idletasks()
+        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))

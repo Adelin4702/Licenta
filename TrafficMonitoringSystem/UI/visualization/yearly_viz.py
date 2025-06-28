@@ -239,6 +239,9 @@ class YearlyVisualization(BaseVisualization):
             content=monthly_content.strip(),
             title_color=self.colors['info']
         )
+        
+        self.stats_panel.text_stats_frame.update_idletasks()
+        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))
     
     def _analyze_growth_trend(self, monthly_totals, months):
         """Analyze growth trend throughout the year"""

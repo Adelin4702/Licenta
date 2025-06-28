@@ -116,6 +116,9 @@ class DistributionVisualization(BaseVisualization):
             recommendations,
             self.colors['accent']
         )
+        
+        self.stats_panel.text_stats_frame.update_idletasks()
+        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))
 
         self.stats_panel.scroll_to_top()
 

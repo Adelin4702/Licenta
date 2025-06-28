@@ -135,5 +135,8 @@ class HourlyVisualization(BaseVisualization):
                 self.colors['info']
             )
 
+        self.stats_panel.text_stats_frame.update_idletasks()
+        self.stats_panel.canvas.configure(scrollregion=self.stats_panel.canvas.bbox("all"))
+        
         # Scroll to top for better visibility
         self.stats_panel.scroll_to_top()
