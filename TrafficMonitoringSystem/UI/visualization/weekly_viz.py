@@ -1,6 +1,7 @@
 """
 Weekly visualization for Traffic Analyzer App
 """
+import datetime
 from .base_viz import BaseVisualization
 from UI.utils.date_utils import DateUtils
 from UI.utils.constants import CHART_CONFIG, MESSAGES
@@ -61,7 +62,7 @@ class WeeklyVisualization(BaseVisualization):
         day_labels = DateUtils.get_week_day_labels(week_start)
         
         for i in range(7):
-            current_day = week_start + DateUtils.timedelta(days=i)
+            current_day = week_start + datetime.timedelta(days=i)
             day_str = current_day.strftime("%Y-%m-%d")
             
             if day_str in week_data_map:

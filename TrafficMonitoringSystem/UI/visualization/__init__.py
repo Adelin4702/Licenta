@@ -1,3 +1,3 @@
 """
-UI Components for Traffic Analyzer
+Visualization modules for Traffic Analyzer
 """

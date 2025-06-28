@@ -1,6 +1,6 @@
 """
 Main application file for Traffic Analyzer App
-Entry point and application orchestration
+Entry point and application orchestration - FIXED VERSION
 """
 import tkinter as tk
 from tkinter import messagebox
@@ -8,7 +8,8 @@ import sys
 import os
 
 # Add the project root to Python path
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, project_root)
 
 from UI.styles.modern_styles import ModernStyles
 from UI.components.header import HeaderComponent
@@ -157,6 +158,11 @@ class TrafficAnalyzerApp:
         )
         placeholder_label.pack(expand=True)
     
+    def clear_initial_placeholder(self):
+        """Clear the initial placeholder - FIXES BANNER ISSUE"""
+        for widget in self.graph_frame.winfo_children():
+            widget.destroy()
+    
     def on_date_select(self, selected_date):
         """Handle date selection from calendar"""
         self.selected_date = selected_date
@@ -172,7 +178,10 @@ class TrafficAnalyzerApp:
         self.generate_visualization(current_view)
     
     def generate_visualization(self, view_type):
-        """Generate selected visualization"""
+        """Generate selected visualization - FIXED TO CLEAR BANNER"""
+        # Clear any existing content first (THIS FIXES THE BANNER ISSUE)
+        self.clear_initial_placeholder()
+        
         # Update title
         self.viz_title.configure(text=f"{view_type}")
         

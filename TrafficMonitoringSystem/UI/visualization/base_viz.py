@@ -23,6 +23,11 @@ class BaseVisualization:
         if self.stats_panel:
             self.stats_panel.clear_stats()
     
+    def clear_placeholder(self):
+        """Clear any placeholder content from graph frame"""
+        for widget in self.graph_frame.winfo_children():
+            widget.destroy()
+    
     def show_no_data_message(self, custom_message=None):
         """Show modern no data message"""
         message = custom_message or MESSAGES['no_data']
